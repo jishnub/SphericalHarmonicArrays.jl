@@ -1,7 +1,10 @@
 name = "SphericalHarmonicArrays"
 uuid = "9dd28c12-4719-4e7d-b634-e7b733a6d046"
-authors = ["Jishnu Bhattacharya <jishnuonline@gmail.com>"]
 version = "0.1.0"
+
+[deps]
+Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
+SphericalHarmonicModes = "0e9554e2-b38b-11e9-16d7-9d9abfec665a"
 
 [compat]
 julia = "1"
