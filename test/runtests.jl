@@ -1,26 +1,55 @@
-using SphericalHarmonicArrays
+using SphericalHarmonicArrays,OffsetArrays
+import SphericalHarmonicArrays: SizeMismatchArrayModeError, 
+SizeMismatchError, MismatchedDimsError, UnexpectedAxisTypeError,
+NotAnSHAxisError
+
 using Test
 
 @testset "Constructors" begin
 	mode = st(0:1,0:0)
+	@testset "0dim" begin
+	    @test SHArray(zeros()) == zeros()
+	end
 	@testset "normal" begin
 	    arr = zeros(ComplexF64,length(mode))
 	    @test SHArray(arr) == arr
 	end
 	@testset "one SH axis" begin
 		arr = zeros(ComplexF64,length(mode))
-	    @test SHArray(mode) == arr
-	    @test SHArray((mode,)) == arr
-	    @test SHArray(mode,(1,)) == arr
-	    @test SHArray((mode,),(1,)) == arr
-	    @test SHVector(mode) == arr
-	    @test SHVector{ComplexF64}(mode) == arr
-	    @test SHVector{Float64}(mode) == real(arr)
-	    @test SHArray(arr,mode) == arr
-	    @test SHArray(arr,(mode,)) == arr
-	    @test SHArray(arr,mode,(1,)) == arr
-	    @test SHArray(arr,(mode,),(1,)) == arr
-	    @test SHVector(arr,mode) == arr
+		@testset "SHArray" begin
+		    @test SHArray(mode) == arr
+		    @test SHArray((mode,)) == arr
+		    @test SHArray(mode,(1,)) == arr
+		    @test SHArray((mode,),(1,)) == arr
+		    @test SHArray(arr,mode) == arr
+		    @test SHArray(arr,(mode,)) == arr
+		    @test SHArray(arr,mode,(1,)) == arr
+		    @test SHArray(arr,(mode,),(1,)) == arr
+		end
+		@testset "SHVector" begin
+		    @test SHVector(mode) == arr
+		    @test SHVector{ComplexF64}(mode) == arr
+		    @test SHVector{Float64}(mode) == real(arr)
+		    @test SHVector(arr,mode) == arr
+		end
+		@testset "BipolarVSH" begin
+			arr = zeros(ComplexF64,length(mode),-1:1,-1:1)
+		   	@test BipolarVSH(mode) == arr
+		   	@test BipolarVSH(mode,-1:1) == arr
+		   	@test BipolarVSH(mode,-1:1,-1:1) == arr
+		    @test BipolarVSH{ComplexF64}(mode) == arr
+		    @test BipolarVSH{Float64}(mode) == real(arr)
+		    @test BipolarVSH(arr,mode) == arr
+		    @test BipolarVSH(arr,(mode,1:3,1:3)) == arr
+
+		   	arr = zeros(ComplexF64,length(mode),0:0,-1:1)
+		   	@test BipolarVSH(mode,0:0) == arr
+		   	@test BipolarVSH(mode,0:0,-1:1) == arr
+
+		   	arr = zeros(ComplexF64,length(mode),0:0,0:0)
+		   	@test BipolarVSH(mode,0:0,0:0) == arr
+
+		end
 
 	    @testset "Errors" begin
 	    	@test_throws UnexpectedAxisTypeError SHArray(mode,(2,))
