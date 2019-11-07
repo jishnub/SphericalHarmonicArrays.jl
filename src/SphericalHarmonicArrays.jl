@@ -7,8 +7,8 @@ import SphericalHarmonicModes: ModeRange, modeindex,
 s_range, t_range, s′_range,
 s_valid_range,t_valid_range,s′_valid_range
 
-export SHArray, SHVector, BipolarVSH
-export modes,shmodes
+export SHArray, SHVector, SHMatrix, BipolarVSH
+export modes,shmodes, SHdims
 
 struct SizeMismatchArrayModeError <: Exception
 	dim :: Int
@@ -162,7 +162,19 @@ BipolarVSH{T}(mode::ModeRange,β::AbstractUnitRange=-1:1,γ::AbstractUnitRange=-
 BipolarVSH(mode::ModeRange,β::AbstractUnitRange=-1:1,γ::AbstractUnitRange=-1:1) = 
 	BipolarVSH{ComplexF64}(mode,β,γ)
 
-# Add to Base methods
+const SHMatrix{T,AA<:AbstractMatrix{T},M<:Tuple{ModeRange,ModeRange}} = SHArray{T,2,AA,M,2}
+
+SHMatrix(arr::AbstractMatrix{<:Number},modes::Tuple{ModeRange,ModeRange}) = 
+	SHArray(arr,modes,(1,2))
+SHMatrix(arr::AbstractMatrix{<:Number},modes::Vararg{ModeRange,2}) = 
+	SHArray(arr,modes,(1,2))
+SHMatrix{T}(modes::Tuple{ModeRange,ModeRange}) where {T<:Number} = 
+	SHArray(zeros(T,map(length,modes)),modes,(1,2))
+SHMatrix{T}(modes::Vararg{ModeRange,2}) where {T<:Number} = SHMatrix{T}(modes)
+SHMatrix(modes::Tuple{ModeRange,ModeRange}) = SHMatrix{ComplexF64}(modes)
+SHMatrix(modes::Vararg{ModeRange,2}) = SHMatrix(modes)
+
+# Add methods to Base functions
 
 @inline Base.parent(s::SHArray) = s.parent
 @inline modes(s::SHArray) = s.modes
@@ -250,6 +262,10 @@ end
 	@inbounds parent(s)[ind] = val
 	val
 end
+
+## Other Base functions
+
+Base.similar(arr::T) where {T<:SHArray} = T(similar(parent(arr)),modes(arr),SHdims(arr))
 
 # Extend methods from SphericalHarmonicModes
 modeindex(arr::SHArrayFirstAxis,l,m) = modeindex(shmodes(arr),l,m)
