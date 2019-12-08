@@ -323,3 +323,13 @@ end
 	M = SHMatrix(mode_lm,mode_lm)
 	testsimilar(M)
 end
+
+@testset "nested" begin
+	sharr = SHVector(LM(0:2))
+	v = [sharr,sharr]
+	n = length(v)
+    @test typeof(v) == Array{typeof(sharr),1}
+    shv = SHVector(v,LM(n:n,1:n)) # get the number of modes to match
+    @test typeof(shv) == SHArray{typeof(sharr),1,typeof(v),Tuple{LM},1}
+    @test_throws SizeMismatchArrayModeError SHVector(v,LM(0:0,0:0))
+end
