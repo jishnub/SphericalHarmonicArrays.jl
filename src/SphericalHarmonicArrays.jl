@@ -4,11 +4,10 @@ import Base: tail, @propagate_inbounds
 
 @reexport using SphericalHarmonicModes
 import SphericalHarmonicModes: ModeRange, modeindex, 
-s_range, t_range, s′_range,
-s_valid_range,t_valid_range,s′_valid_range
+l_range, m_range,l₁_range,l₂_range
 
-export SHArray, SHVector, SHMatrix, BipolarVSH
-export modes,shmodes, SHdims
+export SHArray, SHVector, SHMatrix
+export modes,shmodes, shdims
 
 struct SizeMismatchArrayModeError <: Exception
 	dim :: Int
@@ -16,16 +15,27 @@ struct SizeMismatchArrayModeError <: Exception
 	modelength :: Int
 end
 
+Base.showerror(io::IO, e::SizeMismatchArrayModeError) = print(io,
+	"Size of array does not match the number of modes along dimension $(e.dim). "*
+	"Size of array is $(e.arraylength) whereas the number of modes is $(e.modelength)")
+
 struct SizeMismatchError <: Exception
 	dim :: Int
 	arraylength :: Int
 	axislength :: Int
 end
 
+Base.showerror(io::IO, e::SizeMismatchError) = print(io,
+	"Size of array does not match the size of axis specified along dimension $(e.dim). "*
+	"Size of array is $(e.arraylength) whereas the size of axis is $(e.axislength)")
+
 struct MismatchedDimsError <: Exception
 	M :: Int
 	N :: Int
 end
+
+Base.showerror(io::IO, e::MismatchedDimsError) = print(io,
+	"The array has $(e.N) dimensions but $(e.M) shperical harmonic axes specified")
 
 struct UnexpectedAxisTypeError <: Exception
 	dim :: Int
@@ -33,85 +43,76 @@ struct UnexpectedAxisTypeError <: Exception
 	tgot :: Type
 end
 
-struct NotAnSHAxisError <: Exception end
-
-Base.showerror(io::IO, e::SizeMismatchArrayModeError) = print(io,
-	"Size of array does not match the number of modes along dimension $(e.dim). "*
-	"Size of array is $(e.arraylength) whereas the number of modes is $(e.modelength)")
-
-Base.showerror(io::IO, e::SizeMismatchError) = print(io,
-	"Size of array does not match the size of axis specified along dimension $(e.dim). "*
-	"Size of array is $(e.arraylength) whereas the size of axis is $(e.axislength)")
-
-Base.showerror(io::IO, e::MismatchedDimsError) = print(io,
-	"The array has $(e.N) dimensions but $(e.M) shperical harmonic axes specified")
-
 Base.showerror(io::IO, e::UnexpectedAxisTypeError) = print(io,
 	"Expected type $(e.texp) along dimension $(e.dim) but got $(e.tgot)")
+
+struct NotAnSHAxisError <: Exception end
 
 Base.showerror(io::IO, e::NotAnSHAxisError) = print(io,
 	"Attempted to index into a non-SH axis with a mode Tuple")
 
 const AxisType = Union{ModeRange,AbstractUnitRange}
 
-struct SHArray{T,N,AA<:AbstractArray{T,N},TM<:Tuple{Vararg{AxisType,N}},NSH} <: AbstractArray{T,N}
+struct SHArray{T,N,AA<:AbstractArray{T,N},
+	TM<:Tuple{Vararg{AxisType,N}},NSH} <: AbstractArray{T,N}
+
 	parent :: AA
 	modes :: TM
-	SHdims :: NTuple{NSH,Int}
+	shdims :: NTuple{NSH,Int}
 
-	function SHArray{T,N,AA,TM,NSH}(arr,modes,SHdims) where {T,N,AA,TM,NSH}
+	function SHArray{T,N,AA,TM,NSH}(arr,modes,shdims) where {T,N,AA,TM,NSH}
 
 		NSH > N && throw(MismatchedDimsError(NSH,N))
 
 		for (dim,mode) in enumerate(modes)
-			if dim in SHdims && !isa(mode,ModeRange)
+			if dim in shdims && !isa(mode,ModeRange)
 				throw(UnexpectedAxisTypeError(dim,ModeRange,typeof(mode)))
-			elseif !(dim in SHdims) && mode isa ModeRange
+			elseif !(dim in shdims) && mode isa ModeRange
 				throw(UnexpectedAxisTypeError(dim,typeof(axes(arr,dim)),typeof(mode)))
 			end 
 			if size(arr,dim) != length(mode)
-				if dim in SHdims
+				if dim in shdims
 					throw(SizeMismatchArrayModeError(dim,size(arr,dim),length(mode)))
 				else
 					throw(SizeMismatchError(dim,size(arr,dim),length(mode)))
 				end
 			end
 		end
-		new{T,N,AA,TM,NSH}(arr,modes,SHdims)
+		new{T,N,AA,TM,NSH}(arr,modes,shdims)
 	end
 end
 
 function SHArray(arr::AbstractArray{T,N},modes::Tuple{Vararg{AxisType,N}},
-	SHdims::NTuple{N,Int}) where {T<:Number,N}
-	SHArray{T,N,typeof(arr),typeof(modes),N}(arr,modes,SHdims)
+	shdims::NTuple{N,Int}) where {T<:Number,N}
+	SHArray{T,N,typeof(arr),typeof(modes),N}(arr,modes,shdims)
 end
 
 function SHArray(arr::AbstractArray{T,N},modes::Tuple{Vararg{AxisType,N}},
-	SHdims::NTuple{NSH,Int}) where {T<:Number,N,NSH}
-	SHArray{T,N,typeof(arr),typeof(modes),NSH}(arr,modes,SHdims)
+	shdims::NTuple{NSH,Int}) where {T<:Number,N,NSH}
+	SHArray{T,N,typeof(arr),typeof(modes),NSH}(arr,modes,shdims)
 end
 
 function SHArray(arr::AbstractArray{T,N},modes::Tuple{Vararg{AxisType,NSH}},
-	SHdims::NTuple{NSH,Int}) where {T<:Number,N,NSH}
+	shdims::NTuple{NSH,Int}) where {T<:Number,N,NSH}
 
 	allmodes = Vector{AxisType}(undef,N)
 	allmodes .= axes(arr)
 	for ind in 1:NSH
-		d,m = SHdims[ind],modes[ind]
+		d,m = shdims[ind],modes[ind]
 		allmodes[d] = m
 	end
 	modes = Tuple(allmodes)
-	SHArray{T,N,typeof(arr),typeof(modes),length(SHdims)}(arr,modes,SHdims)
+	SHArray{T,N,typeof(arr),typeof(modes),length(shdims)}(arr,modes,shdims)
 end
 
 function SHArray(arr::AbstractArray{<:Number,N},modes::Tuple{Vararg{AxisType,N}}) where {N}
-	SHdims = Tuple(dim for dim in 1:N if modes[dim] isa ModeRange)
-	SHArray(arr,modes,SHdims)
+	shdims = Tuple(dim for dim in 1:N if modes[dim] isa ModeRange)
+	SHArray(arr,modes,shdims)
 end
 
 SHArray(arr::AbstractArray) = SHArray(arr,axes(arr))
 SHArray(arr::AbstractVector,mode::ModeRange) = SHArray(arr,(mode,))
-SHArray(arr::AbstractVector,mode::ModeRange,SHdims::Tuple{Int}) = SHArray(arr,(mode,),SHdims)
+SHArray(arr::AbstractVector,mode::ModeRange,shdims::Tuple{Int}) = SHArray(arr,(mode,),shdims)
 
 # These constructors allocate an array of an appropriate size
 SHArray{T}(mode::ModeRange) where {T<:Number} = SHArray(zeros(T,length(mode)),(mode,))
@@ -123,13 +124,13 @@ end
 SHArray{T}(modes::Tuple{Vararg{AxisType}}) where {T<:Number} = SHArray{T}(modes...)
 SHArray(modes::Vararg{AxisType}) = SHArray{ComplexF64}(modes)
 SHArray(modes::Tuple{Vararg{AxisType}}) = SHArray{ComplexF64}(modes)
-function SHArray{T}(modes::Tuple{Vararg{AxisType}},SHdims::Tuple{Vararg{Int}}) where {T<:Number}
+function SHArray{T}(modes::Tuple{Vararg{AxisType}},shdims::Tuple{Vararg{Int}}) where {T<:Number}
 	ax = Tuple(length(m) for m in modes)
-	SHArray(zeros(T,ax),modes,SHdims)
+	SHArray(zeros(T,ax),modes,shdims)
 end
-SHArray(modes::Tuple{Vararg{AxisType}},SHdims::Tuple{Vararg{Int}}) = SHArray{ComplexF64}(modes,SHdims)
-SHArray{T}(mode::ModeRange,SHdims::Tuple{Int}) where {T<:Number} = SHArray(zeros(T,length(mode)),(mode,),SHdims)
-SHArray(mode::ModeRange,SHdims::Tuple{Int}) = SHArray{ComplexF64}(mode,SHdims)
+SHArray(modes::Tuple{Vararg{AxisType}},shdims::Tuple{Vararg{Int}}) = SHArray{ComplexF64}(modes,shdims)
+SHArray{T}(mode::ModeRange,shdims::Tuple{Int}) where {T<:Number} = SHArray(zeros(T,length(mode)),(mode,),shdims)
+SHArray(mode::ModeRange,shdims::Tuple{Int}) = SHArray{ComplexF64}(mode,shdims)
 
 # Convenience constructors
 const SHArrayOneAxis{T,N,AA,M} = SHArray{T,N,AA,M,1}
@@ -145,22 +146,6 @@ SHVector(arr::AbstractVector,modes::Tuple{ModeRange}) = SHArray(arr,modes,(1,))
 # Automatically allocate a vector of an appropriate size
 SHVector{T}(mode::ModeRange) where {T<:Number} = SHArray(zeros(T,length(mode)),(mode,),(1,))
 SHVector(mode::ModeRange) = SHArray{ComplexF64}(mode)
-
-const BipolarVSH{T,AA,M<:Tuple{ModeRange,AbstractUnitRange,AbstractUnitRange}} = 
-		SHArrayFirstAxis{T,3,AA,M}
-
-BipolarVSH(arr::AbstractArray{T,3},
-	modes::Tuple{ModeRange,AbstractUnitRange,AbstractUnitRange}) where {T<:Number} = 
-	SHArray(arr,modes,(1,))
-
-BipolarVSH(arr::AbstractArray{T,3},mode::ModeRange) where {T<:Number} = 
-	BipolarVSH(arr,(mode,Base.tail(axes(arr))...))
-
-BipolarVSH{T}(mode::ModeRange,β::AbstractUnitRange=-1:1,γ::AbstractUnitRange=-1:1) where {T<:Number} = 
-	SHArray(zeros(T,length(mode),β,γ),(mode,β,γ),(1,))
-
-BipolarVSH(mode::ModeRange,β::AbstractUnitRange=-1:1,γ::AbstractUnitRange=-1:1) = 
-	BipolarVSH{ComplexF64}(mode,β,γ)
 
 const SHMatrix{T,AA<:AbstractMatrix{T},M<:Tuple{ModeRange,ModeRange}} = SHArray{T,2,AA,M,2}
 
@@ -178,7 +163,7 @@ SHMatrix(modes::Vararg{ModeRange,2}) = SHMatrix(modes)
 
 @inline Base.parent(s::SHArray) = s.parent
 @inline modes(s::SHArray) = s.modes
-@inline SHdims(s::SHArray) = s.SHdims
+@inline shdims(s::SHArray) = s.shdims
 
 Base.size(s::SHArray) = size(parent(s))
 Base.size(s::SHArray,d) = size(parent(s),d)
@@ -265,7 +250,7 @@ end
 
 ## Other Base functions
 
-Base.similar(arr::T) where {T<:SHArray} = T(similar(parent(arr)),modes(arr),SHdims(arr))
+Base.similar(arr::T) where {T<:SHArray} = T(similar(parent(arr)),modes(arr),shdims(arr))
 
 # Extend methods from SphericalHarmonicModes
 modeindex(arr::SHArrayFirstAxis,l,m) = modeindex(shmodes(arr),l,m)
@@ -273,12 +258,13 @@ modeindex(arr::SHArrayFirstAxis,mode::Tuple) = modeindex(shmodes(arr),mode)
 modeindex(arr::SHArrayFirstAxis,::Colon,::Colon) = Colon()
 modeindex(arr::SHArrayFirstAxis,::Tuple{Colon,Colon}) = Colon()
 
-s_range(arr::SHArrayFirstAxis) = s_range(shmodes(arr))
-t_range(arr::SHArrayFirstAxis) = t_range(shmodes(arr))
-s′_range(arr::SHArrayFirstAxis) = s′_range(shmodes(arr))
+l_range(arr::SHArrayFirstAxis) = l_range(shmodes(arr))
+l_range(arr::SHArrayFirstAxis,m::Integer) = l_range(shmodes(arr),m)
+m_range(arr::SHArrayFirstAxis) = m_range(shmodes(arr))
+m_range(arr::SHArrayFirstAxis,l::Integer) = m_range(shmodes(arr),l)
 
-s_valid_range(arr::SHArrayFirstAxis,t::Integer) = s_valid_range(shmodes(arr),t)
-t_valid_range(arr::SHArrayFirstAxis,s::Integer) = t_valid_range(shmodes(arr),s)
-s′_valid_range(arr::SHArrayFirstAxis,s::Integer) = s′_valid_range(shmodes(arr),s)
+l₁_range(arr::SHArrayFirstAxis) = l₁_range(shmodes(arr))
+l₂_range(arr::SHArrayFirstAxis) = l₂_range(shmodes(arr))
+l₂_range(arr::SHArrayFirstAxis,l₁::Integer) = l₂_range(shmodes(arr),l₁)
 
 end # module
