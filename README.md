@@ -50,7 +50,7 @@ julia> SHVector{Int}(modes)
  0
 ```
 
-The parent array may be precomputed.
+The parent array may be preallocated.
 
 ```julia
 julia> v=ones(3);
@@ -126,12 +126,8 @@ julia> SHMatrix(LM(1:2,1:1),LM(1:1)) # need to speficy two axes
  0.0+0.0im  0.0+0.0im  0.0+0.0im
  0.0+0.0im  0.0+0.0im  0.0+0.0im
 
-# may specify a tuple of axes as well
-julia> SHMatrix((LM(1:2,1:1), LM(1:1))) == SHMatrix(LM(1:2,1:1),LM(1:1)) 
-true
-
 # may combine different iterators as axes
-julia> SHMatrix(LM(1:2,1:1), ML(1:1))
+julia> SHMatrix(LM(1:2,1:1),ML(1:1))
 2×3 SHArray{Complex{Float64},2,Array{Complex{Float64},2},Tuple{LM,ML},2}:
  0.0+0.0im  0.0+0.0im  0.0+0.0im
  0.0+0.0im  0.0+0.0im  0.0+0.0im
@@ -189,27 +185,38 @@ julia> sha = SHArray(zeros(1),LM(1:1,0:0))
 julia> sha isa SHVector
 true
 
-julia> SHArray(zeros(1,2), (LM(1:1,0:0), 1:2) )
+julia> SHArray(LM(1:1,0:0),1:2)
 1×2 SHArray{Float64,2,Array{Float64,2},Tuple{LM,UnitRange{Int64}},1}:
  0.0  0.0
+```
 
-julia> SHArray(zeros(1,2), (1:1, LM(1:1,0:1)) ) # second axis stores modes
+If no parent array is specified and the first axis is a subtype of `AbstractArray`, the modes necessarily need to be passed as a `Tuple` to avoid ambiguity. This is because it's otherwise unclear if the first argument is the parent array or the first axis.
+
+```julia
+julia> SHArray((1:1,LM(1:1,0:1))) # second axis stores modes
 1×2 SHArray{Float64,2,Array{Float64,2},Tuple{UnitRange{Int64},LM},1}:
  0.0  0.0
 
-julia> sha = SHArray(zeros(1,2), (LM(1:1,0:0), ML(1:1,0:1)) ) # both axes stores modes
+julia> sha = SHArray(LM(1:1,0:0),ML(1:1,0:1)) # both axes stores modes
 1×2 SHArray{Float64,2,Array{Float64,2},Tuple{LM,ML},2}:
  0.0  0.0
 
 # SHMatrix is an alias for a 2D SHArray with both axes indexed with modes
 julia> sha isa SHMatrix 
 true
+```
 
+It is also possible to create an empty wrapper around an array. This is essentially equivalent to an array and is retained for completeness.
+```julia
 julia> SHArray(zeros(1,2)) # no modes, equivalent to an Array
 1×2 SHArray{Float64,2,Array{Float64,2},Tuple{Base.OneTo{Int64},Base.OneTo{Int64}},0}:
  0.0  0.0
+```
 
-julia> sha = SHArray(zeros(1,2,2), (LM(1:1,0:0), 1:2, ML(0:1,0:0)) ) # mixed axes
+The arrays may have mixed axes, where some store spherical harmonic modes and some don't.
+
+```julia
+julia> sha = SHArray(LM(1:1,0:0),1:2,ML(0:1,0:0)) # mixed axes
 1×2×2 SHArray{Float64,3,Array{Float64,3},Tuple{LM,UnitRange{Int64},ML},2}:
 [:, :, 1] =
  0.0  0.0
@@ -223,21 +230,21 @@ julia> sha = SHArray(zeros(1,2,2), (LM(1:1,0:0), 1:2, ML(0:1,0:0)) ) # mixed axe
 Indexing is similar to `SHVector` and `SHMatrix`. The performance depends on the number of axes being indexed with modes.
 
 ```julia
-julia> sha = SHArray(zeros(1,2), (1:1, LM(1:1,0:1)) )
+julia> sha = SHArray((1:1, LM(1:1,0:1)))
 1×2 SHArray{Float64,2,Array{Float64,2},Tuple{UnitRange{Int64},LM},1}:
  0.0  0.0
 
-julia> sha[1,(1,0)]=4
+julia> sha[1,(1,0)]=4 # first index
 4
 
-julia> sha[1,2]=5
+julia> sha[1,2]=5 # second index
 5
 
 julia> sha
 1×2 SHArray{Float64,2,Array{Float64,2},Tuple{UnitRange{Int64},LM},1}:
  4.0  5.0
 
-julia> sha = SHArray(zeros(1,2,2), (LM(1:1,0:0), 1:2, ML(0:1,0:0)) );
+julia> sha = SHArray(LM(1:1,0:0),1:2,ML(0:1,0:0));
 
 julia> mode1=(1,0);mode2=(1,0); @btime $sha[$mode1,1,$mode2]
   16.205 ns (0 allocations: 0 bytes)
