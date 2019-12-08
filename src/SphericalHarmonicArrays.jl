@@ -83,17 +83,17 @@ struct SHArray{T,N,AA<:AbstractArray{T,N},
 end
 
 function SHArray(arr::AbstractArray{T,N},modes::Tuple{Vararg{AxisType,N}},
-	shdims::NTuple{N,Int}) where {T<:Number,N}
+	shdims::NTuple{N,Int}) where {T,N}
 	SHArray{T,N,typeof(arr),typeof(modes),N}(arr,modes,shdims)
 end
 
 function SHArray(arr::AbstractArray{T,N},modes::Tuple{Vararg{AxisType,N}},
-	shdims::NTuple{NSH,Int}) where {T<:Number,N,NSH}
+	shdims::NTuple{NSH,Int}) where {T,N,NSH}
 	SHArray{T,N,typeof(arr),typeof(modes),NSH}(arr,modes,shdims)
 end
 
 function SHArray(arr::AbstractArray{T,N},modes::Tuple{Vararg{AxisType,NSH}},
-	shdims::NTuple{NSH,Int}) where {T<:Number,N,NSH}
+	shdims::NTuple{NSH,Int}) where {T,N,NSH}
 
 	allmodes = Vector{AxisType}(undef,N)
 	allmodes .= axes(arr)
@@ -115,21 +115,21 @@ SHArray(arr::AbstractVector,mode::ModeRange) = SHArray(arr,(mode,))
 SHArray(arr::AbstractVector,mode::ModeRange,shdims::Tuple{Int}) = SHArray(arr,(mode,),shdims)
 
 # These constructors allocate an array of an appropriate size
-SHArray{T}(mode::ModeRange) where {T<:Number} = SHArray(zeros(T,length(mode)),(mode,))
+SHArray{T}(mode::ModeRange) where {T} = SHArray(zeros(T,length(mode)),(mode,))
 SHArray(mode::ModeRange) = SHArray{ComplexF64}(mode)
-function SHArray{T}(modes::Vararg{AxisType,N}) where {T<:Number,N}
+function SHArray{T}(modes::Vararg{AxisType,N}) where {T,N}
 	ax = Tuple(length(m) for m in modes)
 	SHArray(zeros(T,ax),modes)
 end
-SHArray{T}(modes::Tuple{Vararg{AxisType}}) where {T<:Number} = SHArray{T}(modes...)
+SHArray{T}(modes::Tuple{Vararg{AxisType}}) where {T} = SHArray{T}(modes...)
 SHArray(modes::Vararg{AxisType}) = SHArray{ComplexF64}(modes)
 SHArray(modes::Tuple{Vararg{AxisType}}) = SHArray{ComplexF64}(modes)
-function SHArray{T}(modes::Tuple{Vararg{AxisType}},shdims::Tuple{Vararg{Int}}) where {T<:Number}
+function SHArray{T}(modes::Tuple{Vararg{AxisType}},shdims::Tuple{Vararg{Int}}) where {T}
 	ax = Tuple(length(m) for m in modes)
 	SHArray(zeros(T,ax),modes,shdims)
 end
 SHArray(modes::Tuple{Vararg{AxisType}},shdims::Tuple{Vararg{Int}}) = SHArray{ComplexF64}(modes,shdims)
-SHArray{T}(mode::ModeRange,shdims::Tuple{Int}) where {T<:Number} = SHArray(zeros(T,length(mode)),(mode,),shdims)
+SHArray{T}(mode::ModeRange,shdims::Tuple{Int}) where {T} = SHArray(zeros(T,length(mode)),(mode,),shdims)
 SHArray(mode::ModeRange,shdims::Tuple{Int}) = SHArray{ComplexF64}(mode,shdims)
 
 # Convenience constructors
@@ -144,7 +144,7 @@ SHVector(arr::AbstractVector,mode::ModeRange) = SHArray(arr,(mode,),(1,))
 SHVector(arr::AbstractVector,modes::Tuple{ModeRange}) = SHArray(arr,modes,(1,))
 
 # Automatically allocate a vector of an appropriate size
-SHVector{T}(mode::ModeRange) where {T<:Number} = SHArray(zeros(T,length(mode)),(mode,),(1,))
+SHVector{T}(mode::ModeRange) where {T} = SHArray(zeros(T,length(mode)),(mode,),(1,))
 SHVector(mode::ModeRange) = SHArray{ComplexF64}(mode)
 
 const SHMatrix{T,AA<:AbstractMatrix{T},M<:Tuple{ModeRange,ModeRange}} = SHArray{T,2,AA,M,2}
@@ -153,9 +153,9 @@ SHMatrix(arr::AbstractMatrix{<:Number},modes::Tuple{ModeRange,ModeRange}) =
 	SHArray(arr,modes,(1,2))
 SHMatrix(arr::AbstractMatrix{<:Number},modes::Vararg{ModeRange,2}) = 
 	SHArray(arr,modes,(1,2))
-SHMatrix{T}(modes::Tuple{ModeRange,ModeRange}) where {T<:Number} = 
+SHMatrix{T}(modes::Tuple{ModeRange,ModeRange}) where {T} = 
 	SHArray(zeros(T,map(length,modes)),modes,(1,2))
-SHMatrix{T}(modes::Vararg{ModeRange,2}) where {T<:Number} = SHMatrix{T}(modes)
+SHMatrix{T}(modes::Vararg{ModeRange,2}) where {T} = SHMatrix{T}(modes)
 SHMatrix(modes::Tuple{ModeRange,ModeRange}) = SHMatrix{ComplexF64}(modes)
 SHMatrix(modes::Vararg{ModeRange,2}) = SHMatrix(modes)
 
