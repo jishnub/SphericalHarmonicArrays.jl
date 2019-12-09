@@ -152,6 +152,43 @@ using Test
 			end
 		end
 	end
+	@testset "undef" begin
+	    @testset "SHVector" begin
+
+	        sha = SHVector{Vector}(undef,(mode_lm,))
+	        @test !any([isassigned(sha,i) for i in eachindex(sha)])
+	        @test size(sha) == (length(mode_lm),)
+	        sha = SHVector{Vector}(undef,mode_lm)
+	        @test !any([isassigned(sha,i) for i in eachindex(sha)])
+	    end
+	    @testset "SHMatrix" begin
+
+	       sha = SHMatrix{Vector}(undef,(mode_lm,mode_ml))
+	       @test !any([isassigned(sha,i) for i in eachindex(sha)])
+	       @test size(sha) == (length(mode_lm),length(mode_ml))
+	       sha = SHMatrix{Vector}(undef,mode_lm,mode_ml) 
+	       @test !any([isassigned(sha,i) for i in eachindex(sha)])
+	    end
+	    @testset "SHArray" begin
+
+	       sha = SHArray{Vector,2}(undef,(1:2,mode_ml))
+	       @test !any([isassigned(sha,i) for i in eachindex(sha)])
+	       @test size(sha) == (2,length(mode_ml))
+	       sha = SHArray{Vector,2}(undef,1:2,mode_ml)
+	       @test !any([isassigned(sha,i) for i in eachindex(sha)])
+	       
+	       sha = SHArray{Vector}(undef,(1:2,mode_ml))
+	       @test !any([isassigned(sha,i) for i in eachindex(sha)])
+	       sha = SHArray{Vector}(undef,1:2,mode_ml)
+	       @test !any([isassigned(sha,i) for i in eachindex(sha)])
+	       @test size(sha) == (2,length(mode_ml))
+	       
+	       sha = SHArray{Vector,2}(undef,(1:2,mode_ml),(2,))
+	       @test !any([isassigned(sha,i) for i in eachindex(sha)])
+	       sha = SHArray{Vector}(undef,(1:2,mode_ml),(2,))
+	       @test !any([isassigned(sha,i) for i in eachindex(sha)])
+	    end
+	end
 end
 
 @testset "Indexing" begin

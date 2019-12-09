@@ -52,6 +52,7 @@ Base.showerror(io::IO, e::NotAnSHAxisError) = print(io,
 	"Attempted to index into a non-SH axis with a mode Tuple")
 
 const AxisType = Union{ModeRange,AbstractUnitRange}
+const ArrayInitializer = Union{UndefInitializer, Missing, Nothing}
 
 struct SHArray{T,N,AA<:AbstractArray{T,N},
 	TM<:Tuple{Vararg{AxisType,N}},NSH} <: AbstractArray{T,N}
@@ -105,7 +106,7 @@ function SHArray(arr::AbstractArray{T,N},modes::Tuple{Vararg{AxisType,NSH}},
 	SHArray{T,N,typeof(arr),typeof(modes),length(shdims)}(arr,modes,shdims)
 end
 
-function SHArray(arr::AbstractArray{<:Number,N},modes::Tuple{Vararg{AxisType,N}}) where {N}
+function SHArray(arr::AbstractArray{<:Any,N},modes::Tuple{Vararg{AxisType,N}}) where {N}
 	shdims = Tuple(dim for dim in 1:N if modes[dim] isa ModeRange)
 	SHArray(arr,modes,shdims)
 end
@@ -132,6 +133,32 @@ SHArray(modes::Tuple{Vararg{AxisType}},shdims::Tuple{Vararg{Int}}) = SHArray{Com
 SHArray{T}(mode::ModeRange,shdims::Tuple{Int}) where {T} = SHArray(zeros(T,length(mode)),(mode,),shdims)
 SHArray(mode::ModeRange,shdims::Tuple{Int}) = SHArray{ComplexF64}(mode,shdims)
 
+# undef, missing and nothing initializers
+@inline moderangeaxes(m::ModeRange) = axes(m,1)
+@inline moderangeaxes(m::AxisType) = m
+
+function SHArray{T,N}(init::ArrayInitializer,
+	modes::Tuple{Vararg{AxisType,N}},args...) where {T,N}
+	
+	arr = OffsetArray{T,N}(init,map(moderangeaxes,modes))
+	SHArray(arr,modes,args...)
+end
+
+function SHArray{T}(init::ArrayInitializer,
+	modes::Tuple{Vararg{AxisType,N}},args...) where {T,N}
+	SHArray{T,N}(init,modes,args...)
+end
+
+function SHArray{T,N}(init::ArrayInitializer,modes::Vararg{AxisType,N}) where {T,N}
+	arr = OffsetArray{T,N}(init,map(moderangeaxes,modes))
+	SHArray(arr,modes)
+end
+
+function SHArray{T}(init::ArrayInitializer,modes::Vararg{AxisType,N}) where {T,N}
+	SHArray{T,N}(init,modes)
+end
+SHArray(init::ArrayInitializer,args...) = SHArray{ComplexF64}(init,args...)
+
 # Convenience constructors
 const SHArrayOneAxis{T,N,AA,M} = SHArray{T,N,AA,M,1}
 const SHArrayFirstAxis{T,N,AA,M<:Tuple{ModeRange,Vararg{<:AbstractUnitRange}}} = SHArrayOneAxis{T,N,AA,M}
@@ -147,17 +174,39 @@ SHVector(arr::AbstractVector,modes::Tuple{ModeRange}) = SHArray(arr,modes,(1,))
 SHVector{T}(mode::ModeRange) where {T} = SHArray(zeros(T,length(mode)),(mode,),(1,))
 SHVector(mode::ModeRange) = SHArray{ComplexF64}(mode)
 
+# undef, missing and nothing initializers
+function SHVector{T}(init::ArrayInitializer,modes::Tuple{ModeRange}) where {T}
+	arr = Vector{T}(init,length(modes[1]))
+	SHVector(arr,modes)
+end
+function SHVector{T}(init::ArrayInitializer,modes::ModeRange) where {T}
+	arr = Vector{T}(init,length(modes))
+	SHVector(arr,modes)
+end
+SHVector(init::ArrayInitializer,modes) = SHVector{ComplexF64}(init,modes)
+
 const SHMatrix{T,AA<:AbstractMatrix{T},M<:Tuple{ModeRange,ModeRange}} = SHArray{T,2,AA,M,2}
 
-SHMatrix(arr::AbstractMatrix{<:Number},modes::Tuple{ModeRange,ModeRange}) = 
+SHMatrix(arr::AbstractMatrix,modes::Tuple{ModeRange,ModeRange}) = 
 	SHArray(arr,modes,(1,2))
-SHMatrix(arr::AbstractMatrix{<:Number},modes::Vararg{ModeRange,2}) = 
+SHMatrix(arr::AbstractMatrix,modes::Vararg{ModeRange,2}) = 
 	SHArray(arr,modes,(1,2))
 SHMatrix{T}(modes::Tuple{ModeRange,ModeRange}) where {T} = 
 	SHArray(zeros(T,map(length,modes)),modes,(1,2))
 SHMatrix{T}(modes::Vararg{ModeRange,2}) where {T} = SHMatrix{T}(modes)
 SHMatrix(modes::Tuple{ModeRange,ModeRange}) = SHMatrix{ComplexF64}(modes)
 SHMatrix(modes::Vararg{ModeRange,2}) = SHMatrix(modes)
+
+# undef, missing and nothing initializers
+function SHMatrix{T}(init::ArrayInitializer,modes::Tuple{ModeRange,ModeRange}) where {T}
+	arr = Matrix{T}(init,map(length,modes))
+	SHMatrix(arr,modes)
+end
+function SHMatrix{T}(init::ArrayInitializer,modes::Vararg{ModeRange,2}) where {T}
+	arr = Matrix{T}(init,map(length,modes))
+	SHMatrix(arr,modes)
+end
+SHMatrix(init::ArrayInitializer,modes) = SHMatrix{ComplexF64}(init,modes)
 
 # Add methods to Base functions
 
