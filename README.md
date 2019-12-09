@@ -185,8 +185,8 @@ julia> sha = SHArray(zeros(1),LM(1:1,0:0))
 julia> sha isa SHVector
 true
 
-julia> SHArray(LM(1:1,0:0),1:2)
-1×2 SHArray{Float64,2,Array{Float64,2},Tuple{LM,UnitRange{Int64}},1}:
+julia> SHArray(LM(1:1,0:0),1:2) # returns an OffsetArray
+1×2 SHArray{Complex{Float64},2,OffsetArrays.OffsetArray{Complex{Float64},2,Array{Complex{Float64},2}},Tuple{LM,UnitRange{Int64}},1} with indices 1:1×1:2:
  0.0  0.0
 ```
 
@@ -194,7 +194,7 @@ If no parent array is specified and the first axis is a subtype of `AbstractArra
 
 ```julia
 julia> SHArray((1:1,LM(1:1,0:1))) # second axis stores modes
-1×2 SHArray{Float64,2,Array{Float64,2},Tuple{UnitRange{Int64},LM},1}:
+1×2 SHArray{Complex{Float64},2,OffsetArrays.OffsetArray{Complex{Float64},2,Array{Complex{Float64},2}},Tuple{UnitRange{Int64},LM},1} with indices 1:1×1:2:
  0.0  0.0
 
 julia> sha = SHArray(LM(1:1,0:0),ML(1:1,0:1)) # both axes stores modes
@@ -217,7 +217,7 @@ The arrays may have mixed axes, where some store spherical harmonic modes and so
 
 ```julia
 julia> sha = SHArray(LM(1:1,0:0),1:2,ML(0:1,0:0)) # mixed axes
-1×2×2 SHArray{Float64,3,Array{Float64,3},Tuple{LM,UnitRange{Int64},ML},2}:
+1×2×2 SHArray{Complex{Float64},3,OffsetArrays.OffsetArray{Complex{Float64},3,Array{Complex{Float64},3}},Tuple{LM,UnitRange{Int64},ML},2} with indices 1:1×1:2×1:2:
 [:, :, 1] =
  0.0  0.0
 
@@ -231,8 +231,8 @@ Indexing is similar to `SHVector` and `SHMatrix`. The performance depends on the
 
 ```julia
 julia> sha = SHArray((1:1, LM(1:1,0:1)))
-1×2 SHArray{Float64,2,Array{Float64,2},Tuple{UnitRange{Int64},LM},1}:
- 0.0  0.0
+1×2 SHArray{Complex{Float64},2,OffsetArrays.OffsetArray{Complex{Float64},2,Array{Complex{Float64},2}},Tuple{UnitRange{Int64},LM},1} with indices 1:1×1:2:
+ 0.0+0.0im  0.0+0.0im
 
 julia> sha[1,(1,0)]=4 # first index
 4
@@ -241,12 +241,12 @@ julia> sha[1,2]=5 # second index
 5
 
 julia> sha
-1×2 SHArray{Float64,2,Array{Float64,2},Tuple{UnitRange{Int64},LM},1}:
- 4.0  5.0
+1×2 SHArray{Complex{Float64},2,OffsetArrays.OffsetArray{Complex{Float64},2,Array{Complex{Float64},2}},Tuple{UnitRange{Int64},LM},1} with indices 1:1×1:2:
+ 4.0+0.0im  5.0+0.0im
 
 julia> sha = SHArray(LM(1:1,0:0),1:2,ML(0:1,0:0));
 
 julia> mode1=(1,0);mode2=(1,0); @btime $sha[$mode1,1,$mode2]
-  16.205 ns (0 allocations: 0 bytes)
-0.0
+  19.842 ns (0 allocations: 0 bytes)
+0.0 + 0.0im
 ```
