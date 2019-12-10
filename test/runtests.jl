@@ -339,6 +339,14 @@ end
 		    end
 		end
 	end
+	@testset "nested" begin
+	    s = SHVector{SHVector}(undef,LM(1:1));
+	    v = SHVector(LM(1:2))
+	    for (ind,m) in enumerate(shmodes(s))
+			s[ind] = v
+			@test s[m] == v
+		end
+	end
 end
 
 @testset "similar" begin

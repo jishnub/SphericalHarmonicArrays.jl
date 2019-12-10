@@ -253,7 +253,7 @@ end
 
 # getindex
 
-@inline @propagate_inbounds function Base.getindex(s::SHArray{<:Number,N},
+@inline @propagate_inbounds function Base.getindex(s::SHArray{<:Any,N},
 	inds::Vararg{Union{Integer,Tuple{Integer,Integer}},N}) where {N}
 
 	parentinds = compute_flatinds(s,inds)
@@ -263,7 +263,7 @@ end
 end
 
 # These method passes the indices to the parent
-@inline @propagate_inbounds function Base.getindex(s::SHArray{<:Number,N},
+@inline @propagate_inbounds function Base.getindex(s::SHArray{<:Any,N},
 	inds::Vararg{Integer,N}) where {N}
 
 	@boundscheck checkbounds(s, inds...)
@@ -279,7 +279,7 @@ end
 
 # setindex
 
-@inline @propagate_inbounds function Base.setindex!(s::SHArray{<:Number,N},val,
+@inline @propagate_inbounds function Base.setindex!(s::SHArray{<:Any,N},val,
 	inds::Vararg{Union{Integer,Tuple{Integer,Integer}},N}) where {N}
 
 	parentinds = compute_flatinds(s,inds)
@@ -289,7 +289,7 @@ end
 end
 
 # These methods pass the indices to the parent
-@inline @propagate_inbounds function Base.setindex!(s::SHArray{<:Number,N},val,
+@inline @propagate_inbounds function Base.setindex!(s::SHArray{<:Any,N},val,
 	inds::Vararg{Integer,N}) where {N}
 
 	@boundscheck checkbounds(s, inds...)
