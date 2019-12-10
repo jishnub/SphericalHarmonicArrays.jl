@@ -167,8 +167,8 @@ SHArray(init::ArrayInitializer,args...) = SHArray{ComplexF64}(init,args...)
 
 # Convenience constructors
 const SHArrayOneAxis{T,N,AA,M} = SHArray{T,N,AA,M,1}
-const SHArrayFirstAxis{T,N,AA,M<:Tuple{ModeRange,Vararg{<:AbstractUnitRange}}} = SHArrayOneAxis{T,N,AA,M}
-const SHVector{T,AA,M<:Tuple{ModeRange}} = SHArrayFirstAxis{T,1,AA,M}
+const SHArrayOnlyFirstAxis{T,N,AA,M<:Tuple{ModeRange,Vararg{<:AbstractUnitRange}}} = SHArrayOneAxis{T,N,AA,M}
+const SHVector{T,AA,M<:Tuple{ModeRange}} = SHArrayOnlyFirstAxis{T,1,AA,M}
 
 # Accessor methods
 @inline shmodes(b::SHArrayOneAxis) = modes(b)[1]
@@ -225,8 +225,6 @@ Base.size(s::SHArray,d) = size(parent(s),d)
 Base.axes(s::SHArray) = axes(parent(s))
 Base.axes(s::SHArray,d) = axes(parent(s),d)
 
-Base.fill!(s::SHArray,x) = fill!(parent(s),x)
-
 # Indexing 
 
 Base.IndexStyle(::Type{SA}) where {SA<:SHArray} = IndexStyle(parenttype(SA))
@@ -262,7 +260,7 @@ end
 	ret
 end
 
-# These method passes the indices to the parent
+# These method pass the indices to the parent
 @inline @propagate_inbounds function Base.getindex(s::SHArray{<:Any,N},
 	inds::Vararg{Integer,N}) where {N}
 
@@ -308,18 +306,18 @@ end
 Base.similar(arr::T) where {T<:SHArray} = T(similar(parent(arr)),modes(arr),shdims(arr))
 
 # Extend methods from SphericalHarmonicModes
-modeindex(arr::SHArrayFirstAxis,l,m) = modeindex(shmodes(arr),l,m)
-modeindex(arr::SHArrayFirstAxis,mode::Tuple) = modeindex(shmodes(arr),mode)
-modeindex(arr::SHArrayFirstAxis,::Colon,::Colon) = Colon()
-modeindex(arr::SHArrayFirstAxis,::Tuple{Colon,Colon}) = Colon()
+modeindex(arr::SHArrayOnlyFirstAxis,l,m) = modeindex(shmodes(arr),l,m)
+modeindex(arr::SHArrayOnlyFirstAxis,mode::Tuple) = modeindex(shmodes(arr),mode)
+modeindex(::SHArrayOnlyFirstAxis,::Colon,::Colon) = Colon()
+modeindex(::SHArrayOnlyFirstAxis,::Tuple{Colon,Colon}) = Colon()
 
-l_range(arr::SHArrayFirstAxis) = l_range(shmodes(arr))
-l_range(arr::SHArrayFirstAxis,m::Integer) = l_range(shmodes(arr),m)
-m_range(arr::SHArrayFirstAxis) = m_range(shmodes(arr))
-m_range(arr::SHArrayFirstAxis,l::Integer) = m_range(shmodes(arr),l)
+l_range(arr::SHArrayOnlyFirstAxis) = l_range(shmodes(arr))
+l_range(arr::SHArrayOnlyFirstAxis,m::Integer) = l_range(shmodes(arr),m)
+m_range(arr::SHArrayOnlyFirstAxis) = m_range(shmodes(arr))
+m_range(arr::SHArrayOnlyFirstAxis,l::Integer) = m_range(shmodes(arr),l)
 
-l₁_range(arr::SHArrayFirstAxis) = l₁_range(shmodes(arr))
-l₂_range(arr::SHArrayFirstAxis) = l₂_range(shmodes(arr))
-l₂_range(arr::SHArrayFirstAxis,l₁::Integer) = l₂_range(shmodes(arr),l₁)
+l₁_range(arr::SHArrayOnlyFirstAxis) = l₁_range(shmodes(arr))
+l₂_range(arr::SHArrayOnlyFirstAxis) = l₂_range(shmodes(arr))
+l₂_range(arr::SHArrayOnlyFirstAxis,l₁::Integer) = l₂_range(shmodes(arr),l₁)
 
 end # module
