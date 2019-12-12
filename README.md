@@ -11,7 +11,8 @@ Arrays to store spherical-harmonic coefficients, that may be indexed by modes as
 ### Installing
 
 ```julia
-] add https://github.com/jishnub/SphericalHarmonicArrays.jl
+julia> ]
+pkg> add SphericalHarmonicArrays
 
 julia> using SphericalHarmonicArrays
 ```
@@ -249,4 +250,46 @@ julia> sha = SHArray(LM(1:1,0:0),1:2,ML(0:1,0:0));
 julia> mode1=(1,0);mode2=(1,0); @btime $sha[$mode1,1,$mode2]
   19.842 ns (0 allocations: 0 bytes)
 0.0 + 0.0im
+```
+
+## Broadcasting
+
+`SHArray`s retain information about their modes upon broadcasting. If multiple `SHArray`s are involved in a broadcast operation, the result has the same axes as the one with the most dimensions. The dimensions being broadcasted over, if indexed with modes, have to exactly match for all the `SHArray`s involved in the operation.
+
+```julia
+julia> s = SHMatrix(LM(1:1,0:0),LM(1:1,-1:0));s .= 4
+1×2 SHArray{Complex{Float64},2,Array{Complex{Float64},2},Tuple{LM,LM},2}:
+ 4.0+0.0im  4.0+0.0im
+
+julia> s + s
+1×2 SHArray{Complex{Float64},2,Array{Complex{Float64},2},Tuple{LM,LM},2}:
+ 8.0+0.0im  8.0+0.0im
+
+julia> s .* s
+1×2 SHArray{Complex{Float64},2,Array{Complex{Float64},2},Tuple{LM,LM},2}:
+ 16.0+0.0im  16.0+0.0im
+
+julia> sv = SHVector(first(modes(s)));sv .= 6;
+
+julia> s .* sv # Leading dimensions of s and sv are the same
+1×2 SHArray{Complex{Float64},2,Array{Complex{Float64},2},Tuple{LM,LM},2}:
+ 24.0+0.0im  24.0+0.0im
+```
+
+Broadcasting is an expensive operation because the metadata needs to be stored.
+
+```julia
+julia> s=SHMatrix(LM(1:1,0:0),LM(1:1,-1:0));a=zeros(size(s));oa=zeros(map(UnitRange,axes(s)));
+
+julia> @btime $a + $a; # Arrays are the fastest
+  43.351 ns (1 allocation: 96 bytes)
+
+julia> @btime $oa .+ $oa; # OffsetArrays are less performant
+  429.070 ns (4 allocations: 224 bytes)
+
+julia> @btime $s .+ $s; # SHArrays even less so
+  771.561 ns (3 allocations: 240 bytes)
+
+julia> @btime parent($s) .+ parent($s); # may operate on the parent to get back the speed
+  40.482 ns (1 allocation: 112 bytes)
 ```

@@ -51,6 +51,22 @@ struct NotAnSHAxisError <: Exception end
 Base.showerror(io::IO, e::NotAnSHAxisError) = print(io,
 	"Attempted to index into a non-SH axis with a mode Tuple")
 
+struct ModeMismatchError{A,B} <: Exception
+	mode1 :: A
+	mode2 :: B
+end
+
+function Base.showerror(io::IO, e::ModeMismatchError{A,A}) where {A}
+	print(io,"Modes $(e.mode1) and $(e.mode2) differ")
+end
+function Base.showerror(io::IO, e::ModeMismatchError{A,B}) where {A,B}
+	print(io,"Modes are of different types: $A and $B")
+end
+
+function assert_modes_same(a,b)
+	a == b || throw(ModeMismatchError(a,b))
+end
+
 const AxisType = Union{ModeRange,AbstractUnitRange}
 const ArrayInitializer = Union{UndefInitializer, Missing, Nothing}
 
@@ -82,6 +98,8 @@ struct SHArray{T,N,AA<:AbstractArray{T,N},
 		new{T,N,AA,TM,NSH}(arr,modes,shdims)
 	end
 end
+
+# Constructors
 
 function SHArray(arr::AbstractArray{T,N},modes::Tuple{Vararg{AxisType,N}},
 	shdims::NTuple{N,Int}) where {T,N}
@@ -170,9 +188,6 @@ const SHArrayOneAxis{T,N,AA,M} = SHArray{T,N,AA,M,1}
 const SHArrayOnlyFirstAxis{T,N,AA,M<:Tuple{ModeRange,Vararg{<:AbstractUnitRange}}} = SHArrayOneAxis{T,N,AA,M}
 const SHVector{T,AA,M<:Tuple{ModeRange}} = SHArrayOnlyFirstAxis{T,1,AA,M}
 
-# Accessor methods
-@inline shmodes(b::SHArrayOneAxis) = modes(b)[1]
-
 SHVector(arr::AbstractVector,mode::ModeRange) = SHArray(arr,(mode,),(1,))
 SHVector(arr::AbstractVector,modes::Tuple{ModeRange}) = SHArray(arr,modes,(1,))
 
@@ -217,8 +232,13 @@ SHMatrix(init::ArrayInitializer,modes) = SHMatrix{ComplexF64}(init,modes)
 # Add methods to Base functions
 
 @inline Base.parent(s::SHArray) = s.parent
+Base.similar(arr::T) where {T<:SHArray} = T(similar(parent(arr)),modes(arr),shdims(arr))
+
+# Accessor methods
 @inline modes(s::SHArray) = s.modes
 @inline shdims(s::SHArray) = s.shdims
+@inline shmodes(b::SHArrayOnlyFirstAxis) = modes(b)[1]
+@inline shmodes(b::SHArray) = Tuple(modes(b)[i] for i in shdims(b))
 
 Base.size(s::SHArray) = size(parent(s))
 Base.size(s::SHArray,d) = size(parent(s),d)
@@ -301,9 +321,56 @@ end
 	val
 end
 
-## Other Base functions
+# Broadcasting
+Base.BroadcastStyle(::Type{<:SHArray}) = Broadcast.ArrayStyle{SHArray}()
 
-Base.similar(arr::T) where {T<:SHArray} = T(similar(parent(arr)),modes(arr),shdims(arr))
+@inline function assert_leading_modes_compatible(a::Tuple,b::Tuple)
+	assert_modes_same(a[1],b[1])
+	assert_leading_modes_compatible(Base.tail(a),Base.tail(b))
+end
+@inline assert_leading_modes_compatible(a::Tuple{},b::Tuple) = nothing
+@inline assert_leading_modes_compatible(a::Tuple,b::Tuple{}) = nothing
+@inline assert_leading_modes_compatible(a::Tuple{},b::Tuple{}) = nothing
+
+function modes_shdims_larger(A::SHArray,B::SHArray)
+	modes_A = modes(A)
+    modes_out,shdims_out = modes_A,shdims(A)
+
+    (A === B) && return modes_out,shdims_out
+
+    modes_B = modes(B)
+
+    assert_leading_modes_compatible(modes_A,modes_B)
+
+    if ndims(A) < ndims(B)
+		modes_out,shdims_out = modes_B,shdims(B)
+	end
+
+	return modes_out,shdims_out
+end
+
+function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{SHArray}}, 
+	::Type{ElType}) where ElType
+
+    A = find_sharray(bc)
+    modes_out,shdims_out = modes(A),shdims(A)
+
+    # Check to make sure that all the SHArrays that are
+    # being broadcasted over have compatible axes
+    for B in Broadcast.flatten(bc).args
+    	if B isa SHArray
+    		(A === B) && continue
+    		modes_out,shdims_out = modes_shdims_larger(A,B)
+    	end
+    end
+    SHArray(similar(Array{ElType}, axes(bc)), modes_out, shdims_out)
+end
+
+find_sharray(bc::Base.Broadcast.Broadcasted) = find_sharray(bc.args)
+find_sharray(args::Tuple) = find_sharray(find_sharray(args[1]), Base.tail(args))
+find_sharray(x) = x
+find_sharray(a::SHArray, rest) = a
+find_sharray(::Any, rest) = find_sharray(rest)
 
 # Extend methods from SphericalHarmonicModes
 modeindex(arr::SHArrayOnlyFirstAxis,l,m) = modeindex(shmodes(arr),l,m)

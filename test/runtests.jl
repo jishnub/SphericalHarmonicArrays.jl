@@ -1,7 +1,7 @@
 using SphericalHarmonicArrays,OffsetArrays
 import SphericalHarmonicArrays: SizeMismatchArrayModeError, 
 SizeMismatchError, MismatchedDimsError, UnexpectedAxisTypeError,
-NotAnSHAxisError
+NotAnSHAxisError, ModeMismatchError
 
 using Test
 
@@ -377,4 +377,143 @@ end
     shv = SHVector(v,LM(n:n,1:n)) # get the number of modes to match
     @test typeof(shv) == SHArray{typeof(sharr),1,typeof(v),Tuple{LM},1}
     @test_throws SizeMismatchArrayModeError SHVector(v,LM(0:0,0:0))
+end
+
+@testset "broadcasting" begin
+
+	@testset "same ndims" begin
+		@testset "SHArray SHArray" begin
+			@testset "first axis" begin
+			    s = SHArray(LM(0:1),-1:1); @. s = 2
+			    t = similar(s); @. t = 4
+			    s2 = SHArray(LM(2:2,-2:1),-1:1) # dimensions and mode types match but different modes
+			    s3 = SHArray(ML(2:2,-2:1),-1:1) # dimensions and modes match but different mode types
+			    s4 = SHArray(LM(0:2),-1:1) # dimensions don't match
+			    s5 = SHArray((-1:2,LM(1:1))); # sizes match but axes don't
+			    s6 = SHArray(LM(0:1),0:2); # sizes match but axes don't
+
+			    u = s + t
+			    @test all(u .== s[1]+t[1])
+			    @test u == t + s
+
+			    u = @. s + t
+			    @test all(u .== s[1]+t[1])
+			    @test u == (@. t + s)
+
+			    u = @. s + 1
+			    @test all(u .== s[1]+1)
+			    @test u == (@. 1 + s)
+
+			    u = @. 1 + s + t
+			    @test all(u .== s[1]+t[1]+1)
+
+			    u = @. s*t
+			    @test all(u .== s[1]*t[1])
+			    @test u == (@. t*s)
+
+			    u = @. s*t + 1
+			    @test all(u .== s[1]*t[1]+1)
+
+			    @test_throws ModeMismatchError s + s2
+			    @test_throws ModeMismatchError s + s3
+			    @test_throws DimensionMismatch s + s4
+			    @test_throws DimensionMismatch s + s5
+			    @test_throws DimensionMismatch s + s6
+			end
+			@testset "second axis" begin
+			    s = SHArray((-1:1,LM(0:1))); @. s = 2
+			    t = similar(s); @. t = 4
+
+			    u = s + t
+			    @test all(u .== s[1]+t[1])
+			    @test (t + s) == u
+			    
+			    u = @. s + t
+			    @test all(u .== s[1]+t[1])
+			    @test u == (@. t + s)
+			    
+			    u = @. s + 1
+			    @test all(u .== s[1]+1)
+			    @test u == (@. 1 + s)
+			    
+			    u = @. 1 + s + t
+			    @test all(u .== s[1]+t[1]+1)
+			    
+			    u = @. s*t
+			    @test all(u .== s[1]*t[1])
+			    @test u == (@. t*s)
+			    
+			    u = @. s*t + 1
+			    @test all(u .== s[1]*t[1]+1)
+			end
+		end
+		@testset "SHArray Array" begin
+		    s = SHArray((-1:1,LM(0:1))); @. s = 2
+		    t = zeros(axes(s)); @. t = 5
+
+		    u = s + t
+		    @test all(u .== s[1]+t[1])
+		    @test u == (t + s)
+		    
+		    u = @. s + t
+		    @test all(u .== s[1]+t[1])
+		    @test u == (@. t + s)
+		    
+		    u = @. s + 1
+		    @test all(u .== s[1]+1)
+		    @test u == (@. 1 + s)
+		    
+		    u = @. 1 + s + t
+		    @test all(u .== s[1]+t[1]+1)
+		    
+		    u = @. s*t
+		    @test all(u .== s[1]*t[1])
+		    @test u == (@. t*s)
+		    
+		    u = @. s*t + 1
+		    @test all(u .== s[1]*t[1]+1)
+		end
+	end
+	@testset "different ndims" begin
+		@testset "SHArray SHVector" begin
+		    s = SHArray(LM(0:1),-1:1); @. s = 2
+		    t = SHVector(first(modes(s))); @. t = 4
+
+		    u = @. s + t
+		    @test all(u .== s[1]+t[1])
+		    @test modes(u) == modes(s)
+		    @test u == (@. t + s)
+
+		    u = @. s*t
+		    @test all(u .== s[1]*t[1])
+		    @test modes(u) == modes(s)
+		    @test u == (@. t*s)
+
+		    u = @. 1 + s + t
+		    @test all(u .== s[1]+t[1]+1)
+		    @test modes(u)==modes(s)
+
+		    u = @. s*t + 1
+		    @test all(u .== s[1]*t[1]+1)
+		    @test modes(u)==modes(s)
+		end
+		@testset "SHArray Vector" begin
+		    s = SHArray(LM(0:1),-1:1); @. s = 2
+		    t = zeros(axes(s,1)); @. t = 4
+
+		    u = @. s + t
+		    @test all(u .== s[1]+t[1])
+		    @test u == (@. t + s)
+
+		    u = @. s*t
+		    @test all(u .== s[1]*t[1])
+		    @test u == (@. t*s)
+
+		    u = @. 1 + s + t
+		    @test all(u .== s[1]+t[1]+1)
+
+		    u = @. s*t + 1
+		    @test all(u .== s[1]*t[1]+1)
+		end
+	end
 end
