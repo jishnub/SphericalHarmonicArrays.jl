@@ -233,6 +233,7 @@ SHMatrix(init::ArrayInitializer,modes) = SHMatrix{ComplexF64}(init,modes)
 
 @inline Base.parent(s::SHArray) = s.parent
 Base.similar(arr::T) where {T<:SHArray} = T(similar(parent(arr)),modes(arr),shdims(arr))
+Base.dataids(A::SHArray) = Base.dataids(parent(A)) # needed for fast broadcasting
 
 # Accessor methods
 @inline modes(s::SHArray) = s.modes
