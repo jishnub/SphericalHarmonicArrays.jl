@@ -234,6 +234,10 @@ SHMatrix(init::ArrayInitializer,modes) = SHMatrix{ComplexF64}(init,modes)
 @inline Base.parent(s::SHArray) = s.parent
 Base.similar(arr::T) where {T<:SHArray} = T(similar(parent(arr)),modes(arr),shdims(arr))
 Base.dataids(A::SHArray) = Base.dataids(parent(A)) # needed for fast broadcasting
+function Broadcast.broadcast_unalias(dest::SHArray, src::SHArray)
+	parent(dest) === parent(src) ? src : Broadcast.unalias(dest, src)
+end
+
 
 # Accessor methods
 @inline modes(s::SHArray) = s.modes
@@ -241,10 +245,10 @@ Base.dataids(A::SHArray) = Base.dataids(parent(A)) # needed for fast broadcastin
 @inline shmodes(b::SHArrayOnlyFirstAxis) = modes(b)[1]
 @inline shmodes(b::SHArray) = Tuple(modes(b)[i] for i in shdims(b))
 
-Base.size(s::SHArray) = size(parent(s))
-Base.size(s::SHArray,d) = size(parent(s),d)
-Base.axes(s::SHArray) = axes(parent(s))
-Base.axes(s::SHArray,d) = axes(parent(s),d)
+@inline Base.size(s::SHArray) = size(parent(s))
+@inline Base.size(s::SHArray,d) = size(parent(s),d)
+@inline Base.axes(s::SHArray) = axes(parent(s))
+@inline Base.axes(s::SHArray,d) = axes(parent(s),d)
 
 # Indexing 
 

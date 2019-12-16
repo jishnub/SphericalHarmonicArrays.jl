@@ -279,21 +279,25 @@ julia> s .* sv # Leading dimensions of s and sv are the same
 Broadcasting operations might be slow, so watch out for performance drops.
 
 ```julia
-julia> sm = SHMatrix(LM(1:1,0:0),LM(1:1,-1:0));a = zeros(size(s));oa = zeros(map(UnitRange,axes(s)));
+julia> sm = SHMatrix(LM(1:1,0:0),LM(1:1,-1:0));a = zeros(size(sm));oa = zeros(map(UnitRange,axes(sm)));
 
-julia> @btime @. $a + $a; # Arrays are the fastest
+# Arrays are the fastest
+julia> @btime @. $a + $a;
   37.537 ns (1 allocation: 96 bytes)
 
-julia> @btime @. $oa + $oa; # OffsetArrays are less performant
-  93.410 ns (4 allocations: 224 bytes)
+ # OffsetArrays are less performant
+julia> @btime @. $oa + $oa;
+  87.452 ns (4 allocations: 224 bytes)
 
-julia> @btime @. $sm + $sm; # SHMatrices even less so
-  100.779 ns (3 allocations: 240 bytes)
+# SHMatrices are comparable
+julia> @btime @. $sm + $sm;
+  80.524 ns (3 allocations: 240 bytes)
 
 julia> sa = SHArray(zeros(1:1,1:2),(LM(1:1,0:0),LM(1:1,-1:0)));
 
-julia> @btime @. $sa + $sa; # SHArrays are the slowest
-  165.285 ns (7 allocations: 400 bytes)
+# SHArrays that use an OffsetArray as the parent are slower
+julia> @btime @. $sa + $sa;
+  159.311 ns (7 allocations: 400 bytes)
 
 # We may operate on the underlying array to regain performance, if the axes permit this.
 julia> @btime parent(parent($sa)) .+ parent(parent($sa));
