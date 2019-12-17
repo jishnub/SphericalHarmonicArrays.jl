@@ -94,7 +94,7 @@ julia> @btime $shv[2] # Linear indexing
 2
 
 julia> mode=(1,0); @btime $shv[$mode] # Indexing using modes
-  8.292 ns (0 allocations: 0 bytes)
+  9.774 ns (0 allocations: 0 bytes)
 2
 
 julia> @. shv = 56 # broadcasting works as expected
@@ -167,7 +167,7 @@ julia> shm[1,2] == shm[(1,1),2] == shm[1,(1,0)] ==shm[(1,1),(1,0)]
 true
 
 julia> mode1=(1,1);mode2=(1,0); @btime $shm[$mode1,$mode2] # twice as expensive as SHVector
-  16.720 ns (0 allocations: 0 bytes)
+  19.026 ns (0 allocations: 0 bytes)
 3.0 + 0.0im
 ```
 

@@ -256,71 +256,53 @@ Base.IndexStyle(::Type{SA}) where {SA<:SHArray} = IndexStyle(parenttype(SA))
 parenttype(::Type{<:SHArray{<:Any,<:Any,AA}}) where {AA} = AA
 parenttype(A::SHArray) = parenttype(typeof(A))
 
-# Convert modes to a linear index along each axis
-@inline compute_flatinds(modes,inds::Integer) = inds
-@inline function compute_flatinds(modes::Tuple{Vararg{Any,1}},inds::Tuple{Integer,Integer})
-	modeindex(modes[1],inds)
-end
-@inline function compute_flatinds(::AbstractUnitRange,::Tuple{Integer,Integer})
-	throw(NotAnSHAxisError())
-end
-@inline function compute_flatinds(modes::ModeRange,inds::Tuple{Integer,Integer})
-	modeindex(modes,inds)
-end
-@inline function compute_flatinds(modes::Tuple,inds::Tuple{Vararg{Union{Integer,Tuple}}})
-	(compute_flatinds(modes[1],inds[1]),compute_flatinds(tail(modes),tail(inds))...)
-end
-@inline compute_flatinds(::Tuple{},::Tuple{}) = ()
-@inline compute_flatinds(s::SHArray,inds::Union{Integer,Tuple}) = compute_flatinds(modes(s),inds)
+@inline Base.to_indices(s::SHArray,inds::Tuple) = Base.to_indices(s,modes(s),inds)
+@inline Base.to_indices(s::SHArray,inds::Tuple{Any}) = Base.to_indices(s,modes(s),inds)
+@inline Base.to_indices(s::SHArray,inds::Tuple{Vararg{Union{Integer, CartesianIndex},N} where N}) = 
+	Base.to_indices(s,modes(s),inds)
 
+const ModeRangeIndexType = Union{Tuple{Integer,Integer},ModeRange,
+							Tuple{AbstractUnitRange{<:Integer},AbstractUnitRange{<:Integer}}}
+
+@inline Base.to_indices(s::SHArray,m::Tuple{ModeRange,Vararg{Any}},
+	inds::Tuple{ModeRangeIndexType,Vararg{Any,N} where N}) = 
+	(modeindex(m[1],inds[1]),to_indices(s,Base._maybetail(m),tail(inds))...)
+
+# throw an informative error if the axis is not indexed by a ModeRange
+@inline Base.to_indices(s::SHArray,m::Tuple{Any,Vararg{Any}},
+	inds::Tuple{ModeRangeIndexType,Vararg{Any,N} where N}) = throw(NotAnSHAxisError())
+
+@inline Base.to_indices(s::SHArray,m::Tuple{ModeRange,Vararg{Any}},inds::Tuple{Colon,Vararg{Any}}) = 
+	(Base.uncolon(m,inds),to_indices(s,Base._maybetail(m),tail(inds))...)
+
+@inline Base.uncolon(m::Tuple{ModeRange,Vararg{Any}},
+	::Tuple{Colon,Vararg{Any}}) = Base.Slice(Base.OneTo(length(m[1])))
 
 # getindex
-
-@inline @propagate_inbounds function Base.getindex(s::SHArray{<:Any,N},
-	inds::Vararg{Union{Integer,Tuple{Integer,Integer}},N}) where {N}
-
-	parentinds = compute_flatinds(s,inds)
+@inline @propagate_inbounds function Base.getindex(s::SHArray,inds::Vararg{<:Any})
+	parentinds = to_indices(s,inds)
 	@boundscheck checkbounds(s, parentinds...)
 	@inbounds ret = parent(s)[parentinds...]
 	ret
 end
 
-# These method pass the indices to the parent
-@inline @propagate_inbounds function Base.getindex(s::SHArray{<:Any,N},
-	inds::Vararg{Integer,N}) where {N}
-
-	@boundscheck checkbounds(s, inds...)
-	@inbounds ret = parent(s)[inds...]
-	ret
-end
-
-@inline @propagate_inbounds function Base.getindex(s::SHArray,ind::Integer)
+# This method passes the indices to the parent
+@inline @propagate_inbounds function Base.getindex(s::SHArray,ind::Int)
 	@boundscheck checkbounds(s, ind)
 	@inbounds ret = parent(s)[ind]
 	ret
 end
 
 # setindex
-
-@inline @propagate_inbounds function Base.setindex!(s::SHArray{<:Any,N},val,
-	inds::Vararg{Union{Integer,Tuple{Integer,Integer}},N}) where {N}
-
-	parentinds = compute_flatinds(s,inds)
+@inline @propagate_inbounds function Base.setindex!(s::SHArray,val,inds::Vararg{<:Any})
+	parentinds = to_indices(s,inds)
 	@boundscheck checkbounds(s, parentinds...)
 	@inbounds parent(s)[parentinds...] = val
 	val
 end
 
-# These methods pass the indices to the parent
-@inline @propagate_inbounds function Base.setindex!(s::SHArray{<:Any,N},val,
-	inds::Vararg{Integer,N}) where {N}
-
-	@boundscheck checkbounds(s, inds...)
-	@inbounds parent(s)[inds...] = val
-	val
-end
-
-@inline @propagate_inbounds function Base.setindex!(s::SHArray,val,ind::Integer)
+# This method passes the indices to the parent
+@inline @propagate_inbounds function Base.setindex!(s::SHArray,val,ind::Int)
 	@boundscheck checkbounds(s, ind)
 	@inbounds parent(s)[ind] = val
 	val

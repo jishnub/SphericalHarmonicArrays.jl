@@ -191,6 +191,30 @@ using Test
 	end
 end
 
+@testset "Base functions" begin
+	mode_lm = LM(0:1,0:0)
+	mode_ml = ML(0:1,0:0)
+	
+	arr = zeros(length(mode_lm),length(mode_ml))
+	sm = SHMatrix(arr,(mode_lm,mode_ml))
+
+	@testset "parent" begin
+		@test parent(sm) == arr
+		@test parent(sm) === arr
+	end
+    @testset "axes" begin
+        @test axes(sm,1) == axes(arr,1)
+        @test axes(sm,2) == axes(arr,2)
+    end
+    @testset "size" begin
+        @test size(sm,1) == size(arr,1)
+        @test size(sm,2) == size(arr,2)
+    end
+    @testset "dataids" begin
+        @test Base.dataids(sm) == Base.dataids(arr)
+    end
+end
+
 @testset "Indexing" begin
 	mode_lm = LM(0:1,0:0)
 	@testset "1D SH" begin
@@ -206,6 +230,10 @@ end
 			    	@test v[m] == 0
 			    end
 	    	end
+	    	@testset "colon" begin
+	    	    @test all(@. v[:] == 0)
+	    	    @test v[:] == zeros(size(v))
+	    	end
 	    end
 	    @testset "setindex" begin
 	    	@testset "linear" begin
@@ -219,6 +247,10 @@ end
 			    	v[m] = i
 			    	@test v[m] == i
 			    end
+	    	end
+	    	@testset "colon" begin
+	    	    v[:] .= 4
+	    	    @test all(@. v[:] == 4)
 	    	end
 	    end
 	end
@@ -235,6 +267,10 @@ end
 			    	@test_throws NotAnSHAxisError v[m]
 			    end
 	    	end
+	    	@testset "colon" begin
+	    	    @test all(@. v[:] == 0)
+	    	    @test v[:] == zeros(size(v))
+	    	end
 	    end
 	    @testset "setindex" begin
 	    	@testset "linear" begin
@@ -248,104 +284,207 @@ end
 			    	@test_throws NotAnSHAxisError v[m] = i
 			    end
 	    	end
+	    	@testset "colon" begin
+	    	    v[:] .= 4
+	    	    @test all(@. v[:] == 4)
+	    	end
 	    end
 	end
 	@testset "2D mixed axes" begin
 		@testset "first SH" begin
-		    v = SHArray((mode_lm,1:2))
+		    a = SHArray((mode_lm,1:2))
 		    @testset "getindex" begin
 		    	@testset "linear" begin
-			    	for i in eachindex(v)
-				    	@test v[i] == 0
+			    	for i in eachindex(a)
+				    	@test a[i] == 0
 				    end
 		    	end
 		    	@testset "mode_lm" begin
-				    for ind2 in axes(v,2), m in mode_lm
-				    	@test v[m,ind2] == 0
+				    for ind2 in axes(a,2), m in mode_lm
+				    	@test a[m,ind2] == 0
 				    end
 		    	end
+		    	@testset "colon" begin
+		    		for j in axes(a,2)
+	    	    		@test a[:,j] == zeros(size(a,1))
+	    	    	end
+	    	    	for i in axes(a,1)
+	    	    		@test a[i,:] == zeros(size(a,2))
+	    	    	end
+	    		end
 		    end
 		    @testset "setindex" begin
 		    	@testset "linear" begin
-				    for i in eachindex(v)
-				    	v[i] = i
-				    	@test v[i] == i
+				    for i in eachindex(a)
+				    	a[i] = i
+				    	@test a[i] == i
 				    end
 		    	end
 		    	@testset "mode_lm" begin
-				    for ind2 in axes(v,2),(i,m) in enumerate(mode_lm)
-				    	v[m,ind2] = i
-				    	@test v[m,ind2] == i
+				    for ind2 in axes(a,2),(i,m) in enumerate(mode_lm)
+				    	a[m,ind2] = i
+				    	@test a[m,ind2] == i
 				    end
 		    	end
+		    	@testset "colon" begin
+		    	    for j in axes(a,2)
+		    	    	@. a[:,j] = 1
+	    	    		@test a[:,j] == ones(size(a,1))
+	    	    		a[:,j] += a[:,j]
+	    	    		@test a[:,j] == 2 .* ones(size(a,1))
+	    	    	end
+	    	    	for i in axes(a,1)
+	    	    		@. a[i,:] = 1
+	    	    		@test a[i,:] == ones(size(a,2))
+	    	    		@. a[i,:] += a[i,:]
+	    	    		@test a[i,:] == 2 .* ones(size(a,2))
+	    	    	end
+	    	    	@. a = 1
+	    	    	@test a == ones(size(a))
+	    	    	a[:,:] .= 1
+	    	    	@test a == ones(size(a))
+	    	    	a += a[:,:]
+	    	    	@test a == 2 .* ones(size(a))
+	    	    	a[:,:] += a[:,:]
+	    	    	@test a == 4 .* ones(size(a))
+	    		end
 		    end
 		end
 		@testset "second SH" begin
-		    v = SHArray((1:2,mode_lm))
+		    a = SHArray((1:2,mode_lm))
 		    @testset "getindex" begin
 		    	@testset "linear" begin
-			    	for i in eachindex(v)
-				    	@test v[i] == 0
+			    	for i in eachindex(a)
+				    	@test a[i] == 0
 				    end
 		    	end
 		    	@testset "mode_lm" begin
-				    for (i,m) in enumerate(mode_lm),ind1 in axes(v,1)
-				    	@test v[ind1,m] == 0
+				    for (i,m) in enumerate(mode_lm),ind1 in axes(a,1)
+				    	@test a[ind1,m] == 0
 				    end
 		    	end
+		    	@testset "colon" begin
+		    		for j in axes(a,2)
+	    	    		@test a[:,j] == zeros(size(a,1))
+	    	    	end
+	    	    	for i in axes(a,1)
+	    	    		@test a[i,:] == zeros(size(a,2))
+	    	    	end
+	    		end
 		    end
 		    @testset "setindex" begin
 		    	@testset "linear" begin
-				    for i in eachindex(v)
-				    	v[i] = i
-				    	@test v[i] == i
+				    for i in eachindex(a)
+				    	a[i] = i
+				    	@test a[i] == i
 				    end
 		    	end
 		    	@testset "mode_lm" begin
-				    for (i,m) in enumerate(mode_lm),ind1 in axes(v,1)
-				    	v[ind1,m] = i
-				    	@test v[ind1,m] == i
+				    for (i,m) in enumerate(mode_lm),ind1 in axes(a,1)
+				    	a[ind1,m] = i
+				    	@test a[ind1,m] == i
 				    end
 		    	end
+		    	@testset "colon" begin
+		    	    for j in axes(a,2)
+		    	    	@. a[:,j] = 1
+	    	    		@test a[:,j] == ones(size(a,1))
+	    	    		a[:,j] += a[:,j]
+	    	    		@test a[:,j] == 2 .* ones(size(a,1))
+	    	    	end
+	    	    	for i in axes(a,1)
+	    	    		@. a[i,:] = 1
+	    	    		@test a[i,:] == ones(size(a,2))
+	    	    		@. a[i,:] += a[i,:]
+	    	    		@test a[i,:] == 2 .* ones(size(a,2))
+	    	    	end
+	    	    	@. a = 1
+	    	    	@test a == ones(size(a))
+	    	    	a[:,:] .= 1
+	    	    	@test a == ones(size(a))
+	    	    	a += a[:,:]
+	    	    	@test a == 2 .* ones(size(a))
+	    	    	a[:,:] += a[:,:]
+	    	    	@test a == 4 .* ones(size(a))
+	    		end
 		    end
 		end
 		@testset "both SH" begin
-		    v = SHArray((mode_lm,mode_lm))
+		    a = SHArray((mode_lm,mode_lm))
 		    @testset "getindex" begin
 		    	@testset "linear" begin
-			    	for i in eachindex(v)
-				    	@test v[i] == 0
+			    	for i in eachindex(a)
+				    	@test a[i] == 0
 				    end
 		    	end
 		    	@testset "mode_lm" begin
 				    for m2 in mode_lm,m1 in mode_lm
-				    	@test v[m1,m2] == 0
+				    	@test a[m1,m2] == 0
 				    end
 		    	end
+		    	@testset "colon" begin
+		    		for j in axes(a,2)
+	    	    		@test a[:,j] == zeros(size(a,1))
+	    	    	end
+	    	    	for i in axes(a,1)
+	    	    		@test a[i,:] == zeros(size(a,2))
+	    	    	end
+	    		end
 		    end
 		    @testset "setindex" begin
 		    	@testset "linear" begin
-				    for i in eachindex(v)
-				    	v[i] = i
-				    	@test v[i] == i
+				    for i in eachindex(a)
+				    	a[i] = i
+				    	@test a[i] == i
 				    end
 		    	end
 		    	@testset "mode_lm" begin
 				    for (i,m2) in enumerate(mode_lm),m1 in mode_lm
-				    	v[m1,m2] = i
-				    	@test v[m1,m2] == i
+				    	a[m1,m2] = i
+				    	@test a[m1,m2] == i
 				    end
 		    	end
+		    	@testset "colon" begin
+		    	    for j in axes(a,2)
+		    	    	@. a[:,j] = 1
+	    	    		@test a[:,j] == ones(size(a,1))
+	    	    		a[:,j] += a[:,j]
+	    	    		@test a[:,j] == 2 .* ones(size(a,1))
+	    	    	end
+	    	    	for i in axes(a,1)
+	    	    		@. a[i,:] = 1
+	    	    		@test a[i,:] == ones(size(a,2))
+	    	    		@. a[i,:] += a[i,:]
+	    	    		@test a[i,:] == 2 .* ones(size(a,2))
+	    	    	end
+	    	    	@. a = 1
+	    	    	@test a == ones(size(a))
+	    	    	a[:,:] .= 1
+	    	    	@test a == ones(size(a))
+	    	    	a += a[:,:]
+	    	    	@test a == 2 .* ones(size(a))
+	    	    	a[:,:] += a[:,:]
+	    	    	@test a == 4 .* ones(size(a))
+	    		end
 		    end
 		end
 	end
 	@testset "nested" begin
 	    s = SHVector{SHVector}(undef,LM(1:1));
 	    v = SHVector(LM(1:2))
-	    for (ind,m) in enumerate(shmodes(s))
-			s[ind] = v
-			@test s[m] == v
-		end
+	    @testset "linear" begin
+		    for (ind,m) in enumerate(shmodes(s))
+				s[ind] = v
+				@test s[m] == v
+				@test s[ind] == v
+			end
+	    end
+	    @testset "colon" begin
+	        for ind in eachindex(s)
+				s[ind] = v
+			end
+	        @test s[:] == [v for i in axes(s,1)]
+	    end
 	end
 end
 
@@ -380,7 +519,6 @@ end
 end
 
 @testset "broadcasting" begin
-
 	@testset "same ndims" begin
 		@testset "SHArray SHArray" begin
 			@testset "first axis" begin
@@ -515,5 +653,71 @@ end
 		    u = @. s*t + 1
 		    @test all(u .== s[1]*t[1]+1)
 		end
+	end
+end
+
+@testset "accessor functions" begin
+	mode_lm = LM(0:1,0:0)
+
+	@testset "SHArray" begin
+		arr = zeros(2,length(mode_lm),1)
+		ax = (axes(arr,1),mode_lm,axes(arr,3))
+	    sa = SHArray(arr,ax,(2,))
+	    @test modes(sa) == ax
+	    @test shmodes(sa) == (mode_lm,)
+	    @test shdims(sa) == (2,)
+	end
+
+	@testset "SHArrayOnlyFirstAxis" begin
+		@testset "SHVector" begin
+		    sv = SHVector(mode_lm)
+		    @test modes(sv) == (mode_lm,)
+		    @test shmodes(sv) == mode_lm
+		    @test shdims(sv) == (1,)
+		end
+		@testset "SHArray" begin
+			arr = zeros(length(mode_lm),2,1)
+			ax = (mode_lm,axes(arr)[2:3]...)
+		    sa = SHArray(arr,ax,(1,))
+		    @test modes(sa) == ax
+		    @test shmodes(sa) == mode_lm
+		    @test shdims(sa) == (1,)
+		end
+	end
+end
+
+@testset "SphericalHarmonicModes" begin
+    mode_lm = LM(0:1,0:0)
+    mode_ml = ML(0:1,0:0)
+    mode_l₂l₁ = L₂L₁Δ(0:2,2,0:2)
+    @testset "SHVector" begin
+    	@testset "LM" begin
+		    sv = SHVector(mode_lm)
+		    @test l_range(sv) == l_range(mode_lm)
+		    @test l_range(sv,0) == l_range(mode_lm,0)
+		    @test modeindex(sv,(1,0)) == modeindex(mode_lm,(1,0))
+		    @test modeindex(sv,1,0) == modeindex(mode_lm,1,0)
+		    @test modeindex(sv,:,:) == Colon()
+		    @test modeindex(sv,(:,:)) == Colon()
+    	end
+    	@testset "ML" begin
+		    sv = SHVector(mode_ml)
+		    @test m_range(sv) == m_range(mode_ml)
+		    @test m_range(sv,1) == m_range(mode_ml,1)
+		    @test modeindex(sv,(1,0)) == modeindex(mode_ml,(1,0))
+		    @test modeindex(sv,1,0) == modeindex(mode_ml,1,0)
+		    @test modeindex(sv,:,:) == Colon()
+		    @test modeindex(sv,(:,:)) == Colon()
+    	end
+    	@testset "L₂L₁Δ" begin
+	    	sv = SHVector(mode_l₂l₁)
+    	   	@test l₁_range(sv) == l₁_range(mode_l₂l₁)
+		    @test l₂_range(sv) == l₂_range(mode_l₂l₁) 
+		    @test l₂_range(sv,1) == l₂_range(mode_l₂l₁,1)
+		    @test modeindex(sv,(1,0)) == modeindex(mode_l₂l₁,(1,0))
+		    @test modeindex(sv,1,0) == modeindex(mode_l₂l₁,1,0)
+		    @test modeindex(sv,:,:) == Colon()
+		    @test modeindex(sv,(:,:)) == Colon()
+    	end
 	end
 end
