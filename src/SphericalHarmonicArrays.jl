@@ -256,13 +256,16 @@ Base.IndexStyle(::Type{SA}) where {SA<:SHArray} = IndexStyle(parenttype(SA))
 parenttype(::Type{<:SHArray{<:Any,<:Any,AA}}) where {AA} = AA
 parenttype(A::SHArray) = parenttype(typeof(A))
 
-@inline Base.to_indices(s::SHArray,inds::Tuple) = Base.to_indices(s,modes(s),inds)
-@inline Base.to_indices(s::SHArray,inds::Tuple{Any}) = Base.to_indices(s,modes(s),inds)
-@inline Base.to_indices(s::SHArray,inds::Tuple{Vararg{Union{Integer, CartesianIndex},N} where N}) = 
-	Base.to_indices(s,modes(s),inds)
-
 const ModeRangeIndexType = Union{Tuple{Integer,Integer},ModeRange,
 							Tuple{AbstractUnitRange{<:Integer},AbstractUnitRange{<:Integer}}}
+
+@inline Base.to_indices(s::SHArray,inds::Tuple) = Base.to_indices(s,modes(s),inds)
+@inline Base.to_indices(s::SHArray,inds::Tuple{ModeRangeIndexType}) = 
+	Base.to_indices(s,modes(s),inds)
+@inline Base.to_indices(s::SHArray,inds::Tuple{Vararg{Union{Integer, CartesianIndex},N} where N}) = 
+	Base.to_indices(s,modes(s),inds)
+@inline Base.to_indices(s::SHArray,inds::Tuple{Any}) = 
+	Base.to_indices(s, (eachindex(IndexLinear(), s),), inds)
 
 @inline Base.to_indices(s::SHArray,m::Tuple{ModeRange,Vararg{Any}},
 	inds::Tuple{ModeRangeIndexType,Vararg{Any,N} where N}) = 
@@ -286,7 +289,7 @@ const ModeRangeIndexType = Union{Tuple{Integer,Integer},ModeRange,
 	ret
 end
 
-# This method passes the indices to the parent
+# Linear indexing with one integer
 @inline @propagate_inbounds function Base.getindex(s::SHArray,ind::Int)
 	@boundscheck checkbounds(s, ind)
 	@inbounds ret = parent(s)[ind]
@@ -301,7 +304,7 @@ end
 	val
 end
 
-# This method passes the indices to the parent
+# Linear indexing with one integer
 @inline @propagate_inbounds function Base.setindex!(s::SHArray,val,ind::Int)
 	@boundscheck checkbounds(s, ind)
 	@inbounds parent(s)[ind] = val

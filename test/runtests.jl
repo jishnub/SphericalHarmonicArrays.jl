@@ -311,6 +311,8 @@ end
 	    	    	for i in axes(a,1)
 	    	    		@test a[i,:] == zeros(size(a,2))
 	    	    	end
+	    	    	@test a[:,:] == zeros(size(a))
+	    	    	@test a[:] == zeros(length(a))
 	    		end
 		    end
 		    @testset "setindex" begin
@@ -347,6 +349,8 @@ end
 	    	    	@test a == 2 .* ones(size(a))
 	    	    	a[:,:] += a[:,:]
 	    	    	@test a == 4 .* ones(size(a))
+	    	    	a[:] += a[:]
+	    	    	@test a == 8 .* ones(size(a))
 	    		end
 		    end
 		end
@@ -370,6 +374,8 @@ end
 	    	    	for i in axes(a,1)
 	    	    		@test a[i,:] == zeros(size(a,2))
 	    	    	end
+	    	    	@test a[:,:] == zeros(size(a))
+	    	    	@test a[:] == zeros(length(a))
 	    		end
 		    end
 		    @testset "setindex" begin
@@ -406,6 +412,8 @@ end
 	    	    	@test a == 2 .* ones(size(a))
 	    	    	a[:,:] += a[:,:]
 	    	    	@test a == 4 .* ones(size(a))
+	    	    	a[:] += a[:]
+	    	    	@test a == 8 .* ones(size(a))
 	    		end
 		    end
 		end
@@ -429,6 +437,8 @@ end
 	    	    	for i in axes(a,1)
 	    	    		@test a[i,:] == zeros(size(a,2))
 	    	    	end
+	    	    	@test a[:,:] == zeros(size(a))
+	    	    	@test a[:] == zeros(length(a))
 	    		end
 		    end
 		    @testset "setindex" begin
@@ -465,6 +475,8 @@ end
 	    	    	@test a == 2 .* ones(size(a))
 	    	    	a[:,:] += a[:,:]
 	    	    	@test a == 4 .* ones(size(a))
+	    	    	a[:] += a[:]
+	    	    	@test a == 8 .* ones(size(a))
 	    		end
 		    end
 		end
