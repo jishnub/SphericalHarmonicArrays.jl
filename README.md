@@ -285,19 +285,19 @@ julia> sm = SHMatrix(LM(1:1,0:0),LM(1:1,-1:0));a = zeros(size(sm));oa = zeros(ma
 julia> @btime @. $a + $a;
   37.537 ns (1 allocation: 96 bytes)
 
- # OffsetArrays are less performant
+ # OffsetArrays are slightly less performant
 julia> @btime @. $oa + $oa;
-  87.452 ns (4 allocations: 224 bytes)
+  47.043 ns (2 allocations: 128 bytes)
 
-# SHMatrices are comparable
+# SHMatrices are significantly less so
 julia> @btime @. $sm + $sm;
   80.524 ns (3 allocations: 240 bytes)
 
 julia> sa = SHArray(zeros(1:1,1:2),(LM(1:1,0:0),LM(1:1,-1:0)));
 
-# SHArrays that use an OffsetArray as the parent are slower
+# SHArrays that use an OffsetArray as the parent are even slower
 julia> @btime @. $sa + $sa;
-  159.311 ns (7 allocations: 400 bytes)
+  111.421 ns (4 allocations: 256 bytes)
 
 # We may operate on the underlying array to regain performance, if the axes permit this.
 julia> @btime parent(parent($sa)) .+ parent(parent($sa));
