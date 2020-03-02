@@ -672,12 +672,22 @@ end
 	mode_lm = LM(0:1,0:0)
 
 	@testset "SHArray" begin
-		arr = zeros(2,length(mode_lm),1)
-		ax = (axes(arr,1),mode_lm,axes(arr,3))
-	    sa = SHArray(arr,ax,(2,))
-	    @test modes(sa) == ax
-	    @test shmodes(sa) == (mode_lm,)
-	    @test shdims(sa) == (2,)
+	    @testset "SHArrayOneAxis" begin
+	    	arr = zeros(2,length(mode_lm),1)
+			ax = (axes(arr,1),mode_lm,axes(arr,3))
+		    sa = SHArray(arr,ax,(2,))
+		    @test modes(sa) == ax
+		    @test shmodes(sa) == mode_lm
+		    @test shdims(sa) == (2,)
+		end
+		@testset "general" begin
+		    arr = zeros(2,length(mode_lm),length(mode_lm))
+			ax = (axes(arr,1),mode_lm,mode_lm)
+		    sa = SHArray(arr,ax,(2,3))
+		    @test modes(sa) == ax
+		    @test shmodes(sa) == (mode_lm,mode_lm)
+		    @test shdims(sa) == (2,3) 
+		end
 	end
 
 	@testset "SHArrayOnlyFirstAxis" begin
