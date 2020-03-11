@@ -188,10 +188,10 @@ end
 @inline shdims(s::SHArray) = s.shdims
 @inline shmodes(b::SHArrayOnlyFirstAxis) = first(modes(b))
 
-firstshmodes(t::Tuple{AbstractUnitRange,Vararg{<:Any}}) = firstshmodes(Base.tail(t))
-firstshmodes(t::Tuple{ModeRange,Vararg{<:Any}}) = first(t)
+firstshmode(t::Tuple{AbstractUnitRange,Vararg{<:Any}}) = firstshmode(Base.tail(t))
+firstshmode(t::Tuple{ModeRange,Vararg{<:Any}}) = first(t)
 
-@inline shmodes(b::SHArrayOneAxis) = firstshmodes(modes(b))
+@inline shmodes(b::SHArrayOneAxis) = firstshmode(modes(b))
 @inline shmodes(b::SHArray) = Tuple(modes(b)[i] for i in shdims(b))
 
 @inline Base.size(s::SHArray) = size(parent(s))
