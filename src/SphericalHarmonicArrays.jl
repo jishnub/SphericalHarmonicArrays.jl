@@ -312,18 +312,18 @@ find_sharray(a::SHArray, rest) = a
 find_sharray(::Any, rest) = find_sharray(rest)
 
 # Extend methods from SphericalHarmonicModes
-modeindex(arr::SHArrayOnlyFirstAxis,l,m) = modeindex(shmodes(arr),l,m)
-modeindex(arr::SHArrayOnlyFirstAxis,mode::Tuple) = modeindex(shmodes(arr),mode)
-modeindex(::SHArrayOnlyFirstAxis,::Colon,::Colon) = Colon()
-modeindex(::SHArrayOnlyFirstAxis,::Tuple{Colon,Colon}) = Colon()
+modeindex(arr::SHArrayOneAxis,l,m) = modeindex(shmodes(arr),l,m)
+modeindex(arr::SHArrayOneAxis,mode::Tuple) = modeindex(shmodes(arr),mode)
+modeindex(::SHArrayOneAxis,::Colon,::Colon) = Colon()
+modeindex(::SHArrayOneAxis,::Tuple{Colon,Colon}) = Colon()
 
-l_range(arr::SHArrayOnlyFirstAxis) = l_range(shmodes(arr))
-l_range(arr::SHArrayOnlyFirstAxis,m::Integer) = l_range(shmodes(arr),m)
-m_range(arr::SHArrayOnlyFirstAxis) = m_range(shmodes(arr))
-m_range(arr::SHArrayOnlyFirstAxis,l::Integer) = m_range(shmodes(arr),l)
+l_range(arr::SHArrayOneAxis) = l_range(shmodes(arr))
+l_range(arr::SHArrayOneAxis,m::Integer) = l_range(shmodes(arr),m)
+m_range(arr::SHArrayOneAxis) = m_range(shmodes(arr))
+m_range(arr::SHArrayOneAxis,l::Integer) = m_range(shmodes(arr),l)
 
-l₁_range(arr::SHArrayOnlyFirstAxis) = l₁_range(shmodes(arr))
-l₂_range(arr::SHArrayOnlyFirstAxis) = l₂_range(shmodes(arr))
-l₂_range(arr::SHArrayOnlyFirstAxis,l₁::Integer) = l₂_range(shmodes(arr),l₁)
+l₁_range(arr::SHArrayOneAxis) = l₁_range(shmodes(arr))
+l₂_range(arr::SHArrayOneAxis) = l₂_range(shmodes(arr))
+l₂_range(arr::SHArrayOneAxis,l₁::Integer) = l₂_range(shmodes(arr),l₁)
 
 end # module
