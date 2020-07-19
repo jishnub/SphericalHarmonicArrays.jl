@@ -5,6 +5,8 @@ NotAnSHAxisError, ModeMismatchError
 
 using Test
 
+@test isempty(Test.detect_ambiguities(Base, Core, SphericalHarmonicArrays))
+
 @testset "Constructors" begin
 	mode_lm = LM(0:1,0:0)
 	mode_ml = ML(0:1,0:0)
@@ -33,6 +35,12 @@ using Test
 		    @test SHVector{ComplexF64}(mode_lm) == arr
 		    @test SHVector{Float64}(mode_lm) == real(arr)
 		    @test SHVector(arr,mode_lm) == arr
+
+		    sv = SHVector(arr,mode_lm)
+		    svundef = SHVector(undef, mode_lm)
+		    @test svundef.modes == sv.modes
+		    @test svundef.shdims == sv.shdims
+		    @test axes(parent(svundef)) == axes(parent(sv))
 		end
 
 	    @testset "Errors" begin
@@ -44,14 +52,40 @@ using Test
 		    arr = zeros(ComplexF64,length(mode_lm),2)
 		    ax = (mode_lm,1:2)
 		    shdims = (1,)
-		    @test SHArray(ax) == arr
-		    @test SHArray{ComplexF64}(ax) == arr
-		    @test SHArray{Float64}(ax) == real(arr)
-		    @test SHArray(ax,shdims) == arr
-		    @test SHArray{ComplexF64}(ax,shdims) == arr
-		    @test SHArray{Float64}(ax,shdims) == real(arr)
-		    @test SHArray(arr,ax) == arr
-		    @test SHArray(arr,ax,shdims) == arr
+
+		    function testSA(sa, arr, ax, shdims)
+		    	@test parent(sa) == arr
+			    @test sa.modes == ax
+			    @test sa.shdims == shdims	
+		    end
+
+		    sa = SHArray(ax)
+		    testSA(sa, arr, ax, shdims)
+
+		    sa = SHArray(arr, ax)
+		    testSA(sa, arr, ax, shdims)
+
+		    sa = SHArray(arr, ax, shdims)
+		    testSA(sa, arr, ax, shdims)
+		    
+		    sa = SHArray(arr, (mode_lm,), shdims)
+		    testSA(sa, arr, ax, shdims)
+
+		    @test SHArray{ComplexF64}(ax) == sa
+		    @test SHArray{Float64}(ax) == SHArray(real(arr), ax, shdims)
+		    @test SHArray(ax,shdims) == sa
+		    @test SHArray{ComplexF64}(ax,shdims) == sa
+		    @test SHArray{Float64}(ax,shdims) == SHArray(real(arr), ax, shdims)
+		    @test SHArray(arr,ax) == sa
+		    @test SHArray(arr,ax,shdims) == sa
+
+		    saundef = SHArray(undef, ax, shdims)
+		    @test saundef.modes == sa.modes
+		    @test saundef.shdims == sa.shdims
+		    @test axes(parent(saundef)) == axes(parent(sa))
+
+		    sa = SHArray((mode_lm,2))
+		    @test axes(sa) == (1:length(mode_lm), 1:2)
 
 		    @testset "Errors" begin
 		    	@test_throws MismatchedDimsError SHArray(ax,(1,2,3))
@@ -121,7 +155,7 @@ using Test
 			    @test modes(SHMatrix(arr,mode1,mode2)) == (mode1,mode2)
 			    @test modes(SHMatrix(arr,(mode1,mode2))) == (mode1,mode2)
 			    @test modes(SHMatrix(mode1,mode2)) == (mode1,mode2)
-			    @test modes(SHMatrix((mode1,mode2))) == (mode1,mode2)	
+			    @test modes(SHMatrix((mode1,mode2))) == (mode1,mode2)
 			end
 			@testset "LM LM" begin
 			    testSHMatrix(mode_lm,mode_lm)
@@ -150,6 +184,17 @@ using Test
 			@testset "L₂L₁Δ L₂L₁Δ" begin
 			    testSHMatrix(mode_l₂l₁,mode_l₂l₁)
 			end
+
+			sm = SHMatrix((mode_lm, mode_lm))
+		    smundef = SHMatrix(undef, (mode_lm, mode_lm))
+		    @test smundef.modes == sm.modes
+		    @test smundef.shdims == sm.shdims
+		    @test axes(parent(smundef)) == axes(parent(sm))
+		end
+		@testset "none SH" begin
+		    sa = SHArray((2,2))
+		    @test axes(sa) == (1:2, 1:2)
+		    @test sa.modes == (1:2, 1:2)
 		end
 	end
 	@testset "undef" begin
@@ -217,11 +262,18 @@ end
 
 @testset "Indexing" begin
 	mode_lm = LM(0:1,0:0)
+	@testset "0D" begin
+	    s = SHArray(zeros())
+	    @test s[] == 0
+	end
 	@testset "1D SH" begin
 	    v = SHVector(mode_lm)
 	    @testset "getindex" begin
 	    	@testset "linear" begin
 		    	for i in eachindex(v)
+			    	@test v[i] == 0
+			    end
+			    for i in eachindex(IndexCartesian(),v)
 			    	@test v[i] == 0
 			    end
 	    	end
@@ -240,6 +292,10 @@ end
 			    for i in eachindex(v)
 			    	v[i] = i
 			    	@test v[i] == i
+			    end
+			    for (ind,I) in enumerate(eachindex(IndexCartesian(),v))
+			    	v[I] = ind
+			    	@test v[I] == ind
 			    end
 	    	end
 	    	@testset "mode_lm" begin
@@ -498,6 +554,18 @@ end
 	        @test s[:] == [v for i in axes(s,1)]
 	    end
 	end
+	@testset "colon and ranges" begin
+	    sa = SHArray((mode_lm,2))
+	    for i in eachindex(sa)
+	    	sa[i] = i
+	    end
+	    @test sa[:,1] == [1,2]
+	    @test sa[:,2] == [3,4]
+	    @test sa[1,:] == [1,3]
+	    @test sa[(0,0),:] == [1,3]
+	    @test sa[2,:] == [2,4]
+	    @test sa[(1,0),:] == [2,4]
+	end
 end
 
 @testset "similar" begin
@@ -742,4 +810,15 @@ end
 		    @test modeindex(sv,(:,:)) == Colon()
     	end
 	end
+end
+
+@testset "show" begin
+    io = IOBuffer()
+    showerror(io, SphericalHarmonicArrays.SizeMismatchError(1,2,3))
+    showerror(io, SphericalHarmonicArrays.SizeMismatchArrayModeError(1,1,1))
+    showerror(io, SphericalHarmonicArrays.MismatchedDimsError(1,2))
+    showerror(io, SphericalHarmonicArrays.UnexpectedAxisTypeError(1, LM, Base.OneTo))
+    showerror(io, SphericalHarmonicArrays.NotAnSHAxisError())
+    showerror(io, SphericalHarmonicArrays.ModeMismatchError(LM(1:2), LM(1:4)))
+    showerror(io, SphericalHarmonicArrays.ModeMismatchError(LM(1:2), ML(1:4)))
 end
