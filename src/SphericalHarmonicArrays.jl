@@ -14,6 +14,35 @@ include("errors.jl")
 const AxisType = Union{ModeRange,AbstractUnitRange}
 const ArrayInitializer = Union{UndefInitializer, Missing, Nothing}
 
+"""
+	SHArray(arr::AbstractArray{T,N}, modes::Tuple, shdims::NTuple{NSH, Int}) where {T,N,NSH}
+
+Create a wrapper around an array such that the dimensions specified by `shdims` may be 
+indexed using a `Tuple` representing a collection of spherical harmonic degrees. Often this 
+would be a spherical harmonic mode represented by `(l,m)`.
+
+Use the iterators provided by `SphericalHarmonicModes` in `modes` to generate the map between 
+the indices of the array and `Tuple`s of spherical harmonic degrees.
+
+# Examples
+
+```jldoctest
+julia> s = SHArray(reshape(1:4, 2, 2), (LM(0:1,0:0), 2))
+2×2 SHArray{Int64,2,Base.ReshapedArray{Int64,2,UnitRange{Int64},Tuple{}},Tuple{LM,Base.OneTo{Int64}},1}:
+ 1  3
+ 2  4
+
+julia> s.modes[1] |> collect
+2-element Array{Tuple{Int64,Int64},1}:
+ (0, 0)
+ (1, 0)
+
+julia> s[(1,0), 1]
+2
+```
+
+See also: [`SHVector`](@ref), [`SHMatrix`](@ref)
+"""
 struct SHArray{T,N,AA<:AbstractArray{T,N},
 	TM<:Tuple{Vararg{AxisType,N}},NSH} <: AbstractArray{T,N}
 
@@ -21,7 +50,7 @@ struct SHArray{T,N,AA<:AbstractArray{T,N},
 	modes :: TM
 	shdims :: NTuple{NSH,Int}
 
-	function SHArray{T,N,AA,TM,NSH}(arr,modes,shdims) where {T,N,AA,TM,NSH}
+	function SHArray{T,N,AA,TM,NSH}(arr::AA, modes::TM, shdims::NTuple{NSH,Int}) where {T,N,AA,TM,NSH}
 
 		NSH > N && throw(MismatchedDimsError(NSH,N))
 
@@ -44,14 +73,18 @@ struct SHArray{T,N,AA<:AbstractArray{T,N},
 end
 
 # Constructors
+to_axis(n::Int) = Base.OneTo(n)
+to_axis(n) = n
 
-function SHArray(arr::AbstractArray{T,N},modes::Tuple{Vararg{AxisType,N}},
+function SHArray(arr::AbstractArray{T,N},modes::NTuple{N,AxisType},
 	shdims::NTuple{N,Int}) where {T,N}
+	
 	SHArray{T,N,typeof(arr),typeof(modes),N}(arr,modes,shdims)
 end
 
-function SHArray(arr::AbstractArray{T,N},modes::Tuple{Vararg{AxisType,N}},
+function SHArray(arr::AbstractArray{T,N},modes::NTuple{N,AxisType},
 	shdims::NTuple{NSH,Int}) where {T,N,NSH}
+
 	SHArray{T,N,typeof(arr),typeof(modes),NSH}(arr,modes,shdims)
 end
 
@@ -65,12 +98,13 @@ function SHArray(arr::AbstractArray{T,N},modes::Tuple{Vararg{AxisType,NSH}},
 		allmodes[d] = m
 	end
 	modes = Tuple(allmodes)
-	SHArray{T,N,typeof(arr),typeof(modes),length(shdims)}(arr,modes,shdims)
+
+	SHArray(arr,modes,shdims)
 end
 
-function SHArray(arr::AbstractArray{<:Any,N},modes::Tuple{Vararg{AxisType,N}}) where {N}
-	shdims = Tuple(dim for dim in 1:N if modes[dim] isa ModeRange)
-	SHArray(arr,modes,shdims)
+function SHArray(arr::AbstractArray{<:Any,N}, modes::NTuple{N,Union{Int,AxisType}}) where {N}
+	shdims = Tuple(dim for dim in eachindex(modes) if modes[dim] isa ModeRange)
+	SHArray(arr, map(to_axis, modes), shdims)
 end
 
 SHArray(arr::AbstractArray) = SHArray(arr,axes(arr))
@@ -81,9 +115,26 @@ SHArray(arr::AbstractVector, mode::ModeRange,shdims::Tuple{Int}) = SHArray(arr,(
 @inline moderangeaxes(m::ModeRange) = axes(m,1)
 @inline moderangeaxes(m) = m
 
-to_axis(n::Int) = Base.OneTo(n)
-to_axis(n) = n
+"""
+	SHArray{T}(modes::Tuple, [shdims::Tuple])
 
+Return an `SHArray` wrapper around a parent array of the appropriate size with elements of type `T`, 
+such that the dimensions specified by `shdims` may be indexed using `Tuple`s of 
+spherical harmonic degrees. The elements of the parent array are set to zero by default.
+
+	SHArray(modes::Tuple, [shdims::Tuple])
+
+Return an `SHArray` of the appropriate size and element type `ComplexF64`.
+
+# Examples
+
+```jldoctest
+julia> s = SHArray((LM(0:1,0:0), 2))
+2×2 SHArray{Complex{Float64},2,Array{Complex{Float64},2},Tuple{LM,Base.OneTo{Int64}},1}:
+ 0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im
+```
+"""
 function SHArray{T}(modes::Tuple{Vararg{AxisType}},shdims::Tuple{Vararg{Int}}) where {T}
 	ax = Tuple(moderangeaxes(m) for m in modes)
 	SHArray(zeros(T,ax), map(to_axis, modes), shdims)
@@ -135,6 +186,33 @@ const SHArrayOneAxis{T,N,AA,M} = SHArray{T,N,AA,M,1}
 const SHArrayOnlyFirstAxis{T,N,AA,M<:Tuple{ModeRange,Vararg{<:AbstractUnitRange}}} = SHArrayOneAxis{T,N,AA,M}
 const SHVector{T,AA,M<:Tuple{ModeRange}} = SHArrayOnlyFirstAxis{T,1,AA,M}
 
+"""
+	SHVector(arr::AbstractVector, mode::ModeRange)
+
+Return a wrapper that maps the indices of the parent vector to a `Tuple` of spherical harmonic degrees.
+Often the `Tuple` would be a pair of spherical harmonic modes `(l,m)`.
+
+# Examples
+
+```jldoctest
+julia> s = SHVector(1:3, LM(1:1))
+3-element SHArray{Int64,1,UnitRange{Int64},Tuple{LM},1}:
+ 1
+ 2
+ 3
+
+julia> s.modes[1] |> collect
+3-element Array{Tuple{Int64,Int64},1}:
+ (1, -1)
+ (1, 0)
+ (1, 1)
+
+julia> s[(1,0)]
+2
+```
+
+See also: [`SHMatrix`](@ref), [`SHArray`](@ref)
+"""
 SHVector(arr::AbstractVector,mode::ModeRange) = SHArray(arr,(mode,),(1,))
 SHVector(arr::AbstractVector,modes::Tuple{ModeRange}) = SHArray(arr,modes,(1,))
 
@@ -155,14 +233,34 @@ SHVector(init::ArrayInitializer,modes) = SHVector{ComplexF64}(init,modes)
 
 const SHMatrix{T,AA<:AbstractMatrix{T},M<:Tuple{ModeRange,ModeRange}} = SHArray{T,2,AA,M,2}
 
-SHMatrix(arr::AbstractMatrix,modes::Tuple{ModeRange,ModeRange}) = 
-	SHArray(arr,modes,(1,2))
-SHMatrix(arr::AbstractMatrix,modes::Vararg{ModeRange,2}) = 
-	SHArray(arr,modes,(1,2))
-SHMatrix{T}(modes::Tuple{ModeRange,ModeRange}) where {T} = 
+"""
+	SHMatrix(arr::AbstractMatrix, modes::NTuple{2,ModeRange})
+	SHMatrix(arr::AbstractMatrix, ax1::ModeRange, ax2::ModeRange)
+
+Return a wrapper that maps the indices of the parent matrix along each axis 
+to a `Tuple` of spherical harmonic degrees.
+Often these `Tuple`s would be pairs of spherical harmonic modes `(l,m)`.
+
+# Examples
+
+```jldoctest
+julia> s = SHMatrix(reshape(1:4, 2,2), (LM(0:1, 0:0), LM(1:2,0:0)))
+2×2 SHArray{Int64,2,Base.ReshapedArray{Int64,2,UnitRange{Int64},Tuple{}},Tuple{LM,LM},2}:
+ 1  3
+ 2  4
+
+julia> s[(1,0),(2,0)]
+4
+```
+
+See also: [`SHVector`](@ref), [`SHArray`](@ref)
+"""
+SHMatrix(arr::AbstractMatrix, modes::NTuple{2,ModeRange}) = SHArray(arr,modes,(1,2))
+SHMatrix(arr::AbstractMatrix, modes::Vararg{ModeRange,2}) = SHArray(arr,modes,(1,2))
+SHMatrix{T}(modes::NTuple{2,ModeRange}) where {T} = 
 	SHArray(zeros(T,map(moderangeaxes,modes)),modes,(1,2))
 SHMatrix{T}(modes::Vararg{ModeRange,2}) where {T} = SHMatrix{T}(modes)
-SHMatrix(modes::Tuple{ModeRange,ModeRange}) = SHMatrix{ComplexF64}(modes)
+SHMatrix(modes::NTuple{2, ModeRange}) = SHMatrix{ComplexF64}(modes)
 SHMatrix(modes::Vararg{ModeRange,2}) = SHMatrix(modes)
 
 # undef, missing and nothing initializers
