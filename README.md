@@ -3,8 +3,10 @@
 [![Build Status](https://travis-ci.com/jishnub/SphericalHarmonicArrays.jl.svg?branch=master)](https://travis-ci.com/jishnub/SphericalHarmonicArrays.jl)
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/jishnub/SphericalHarmonicArrays.jl?svg=true)](https://ci.appveyor.com/project/jishnub/SphericalHarmonicArrays-jl)
 [![Codecov](https://codecov.io/gh/jishnub/SphericalHarmonicArrays.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/jishnub/SphericalHarmonicArrays.jl)
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://jishnub.github.io/SphericalHarmonicArrays.jl/stable)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://jishnub.github.io/SphericalHarmonicArrays.jl/dev)
 
-Arrays to store spherical-harmonic coefficients, that may be indexed by modes as well as array indices. The type used for this is named `SHArray`, and aliases such as `SHVector` and `SHMatrix` are exported for covenience. `SHArray` is a wrapper around an underlying parent array, usually dense, that is indexed according to iterators that are specified while constructing the type. The arrays may have mixed axes, where certain axes are indexed using spherical harmonic modes whereas the others are indexed like the parent array.
+Arrays to store spherical-harmonic coefficients, that may be indexed by modes as well as array indices. The type used for this is named `SHArray`, and the aliases `SHVector` and `SHMatrix` are exported for covenience. `SHArray` is a wrapper around an underlying parent array, usually dense, that is indexed according to iterators that are specified while constructing the type. The arrays may have mixed axes, where certain axes are indexed using spherical harmonic modes whereas the others are indexed like the parent array.
 
 ## Getting Started
 
