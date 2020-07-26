@@ -309,10 +309,10 @@ parenttype(A::SHArray) = parenttype(typeof(A))
 const ModeRangeIndexType = Union{Tuple{Integer,Integer},ModeRange,
 							Tuple{AbstractUnitRange{<:Integer},AbstractUnitRange{<:Integer}}}
 
-function Base.to_indices(s::SHArray, inds::Tuple)
+@propagate_inbounds function Base.to_indices(s::SHArray, inds::Tuple)
 	Base.to_indices(s, modes(s), inds)
 end
-function Base.to_indices(s::SHArray, inds::Tuple{ModeRangeIndexType})
+@propagate_inbounds function Base.to_indices(s::SHArray, inds::Tuple{ModeRangeIndexType})
 	Base.to_indices(s, modes(s), inds)
 end
 function Base.to_indices(s::SHArray, inds::Tuple{Any})
@@ -327,14 +327,14 @@ function Base.uncolon(inds::Tuple{ModeRange,Vararg{Any}}, I::Tuple{Colon, Vararg
 	Base.Slice(Base.OneTo(length(first(inds))))
 end
 
-@inline function Base.to_indices(s::SHArray, m::Tuple{ModeRange,Vararg{Any}},
+@propagate_inbounds function Base.to_indices(s::SHArray, m::Tuple{ModeRange,Vararg{Any}},
 	inds::Tuple{ModeRangeIndexType,Vararg{Any}})
 
 	(modeindex(first(m),first(inds)), to_indices(s, tail(m), tail(inds))...)
 end
 
 # throw an informative error if the axis is not indexed by a ModeRange
-@inline Base.to_indices(s::SHArray, m::Tuple{AxisType,Vararg{Any}},
+Base.to_indices(s::SHArray, m::Tuple{AxisType,Vararg{Any}},
 	inds::Tuple{ModeRangeIndexType,Vararg{Any,N} where N}) = throw(NotAnSHAxisError())
 
 # getindex
