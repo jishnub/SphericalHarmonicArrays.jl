@@ -36,35 +36,25 @@ julia> modes=LM(1:1)
 Spherical harmonic modes with l increasing faster than m
 (l_min = 1, l_max = 1, m_min = -1, m_max = 1)
 
-julia> SHVector(modes) # will assign an array to store the correct number of modes, 3 in this case
-3-element SHArray{Complex{Float64},1,Array{Complex{Float64},1},Tuple{LM},1}:
- 0.0 + 0.0im
- 0.0 + 0.0im
- 0.0 + 0.0im
-```
-
-The default element type of the parent array is `ComplexF64`, however this may be specified in the constructor.
-
-```julia
-julia> SHVector{Int}(modes)
-3-element SHArray{Int64,1,Array{Int64,1},Tuple{LM},1}:
- 0
- 0
- 0
+julia> SHVector{Float64}(modes)
+3-element SHArray(::Array{Float64,1}, (LM(1:1, -1:1),)):
+ 0.0
+ 0.0
+ 0.0
 ```
 
 The parent array may be preallocated.
 
 ```julia
-julia> v=ones(3);
+julia> v = ones(3);
 
-julia> shv=SHVector(v,modes)
-3-element SHArray{Float64,1,Array{Float64,1},Tuple{LM},1}:
+julia> shv = SHVector(v,modes)
+3-element SHArray(::Array{Float64,1}, (LM(1:1, -1:1),)):
  1.0
  1.0
  1.0
 
-julia> v[1]=4 # update the parent array
+julia> v[1] = 4 # update the parent array
 4
 
 julia> shv # updated as well
@@ -79,7 +69,7 @@ julia> shv # updated as well
 An `SHVector` may be indexed either linearly as a normal vector, or using the modes that are stored in the array. Linear indexing is faster as this simply passes the indices to the parent, so this is what should be used if all the indices of the array are being iterated over. Modes need to be specified as a tuple of integers, eg. `(l,m)`, corresponding to the type of axis iterator that was used to create the `SHVector`.
 
 ```julia
-julia> v=[1,2,3];shv=SHVector(v,LM(1:1))
+julia> v = [1,2,3]; shv=SHVector(v, LM(1:1))
 3-element SHArray{Int64,1,Array{Int64,1},Tuple{LM},1}:
  1
  2
@@ -105,7 +95,7 @@ julia> @. shv = 56 # broadcasting works as expected
  56
  56
 
-julia> shv[(1,-1)]=6 # can set indices using modes, in this case it's specificed as an (l,m) pair
+julia> shv[(1,-1)] = 6 # can set indices using modes, in this case it's specificed as an (l,m) pair
 6
 
 julia> shv
@@ -124,16 +114,16 @@ An `SHMatrix` is a 2D array with both axes storing spherical harmonic coefficien
 The constructors are similar to those of `SHVector`.
 
 ```julia
-julia> SHMatrix(LM(1:2,1:1),LM(1:1)) # need to speficy two axes
-2×3 SHArray{Complex{Float64},2,Array{Complex{Float64},2},Tuple{LM,LM},2}:
- 0.0+0.0im  0.0+0.0im  0.0+0.0im
- 0.0+0.0im  0.0+0.0im  0.0+0.0im
+julia> SHMatrix{Float64}(LM(1:2, 1:1),LM(1:1))
+2×3 SHArray(::Array{Float64,2}, (LM(1:2, 1:1), LM(1:1, -1:1))):
+ 0.0  0.0  0.0
+ 0.0  0.0  0.0
 
 # may combine different iterators as axes
-julia> SHMatrix(LM(1:2,1:1),ML(1:1))
-2×3 SHArray{Complex{Float64},2,Array{Complex{Float64},2},Tuple{LM,ML},2}:
- 0.0+0.0im  0.0+0.0im  0.0+0.0im
- 0.0+0.0im  0.0+0.0im  0.0+0.0im
+julia> SHMatrix{Float64}(LM(1:2, 1:1),ML(1:1))
+2×3 SHArray(::Array{Float64,2}, (LM(1:2, 1:1), ML(1:1, -1:1))):
+ 0.0  0.0  0.0
+ 0.0  0.0  0.0
 ```
 
 ### Indexing
@@ -141,10 +131,10 @@ julia> SHMatrix(LM(1:2,1:1),ML(1:1))
 The matrix elements may be accessed with a combination of mode indices or the index style of the parent array.
 
 ```julia
-julia> shm=SHMatrix(LM(1:2,1:1),LM(1:1))
-2×3 SHArray{Complex{Float64},2,Array{Complex{Float64},2},Tuple{LM,LM},2}:
- 0.0+0.0im  0.0+0.0im  0.0+0.0im
- 0.0+0.0im  0.0+0.0im  0.0+0.0im
+julia> shm = SHMatrix{Float64}(LM(1:2,1:1), LM(1:1))
+2×3 SHArray(::Array{Float64,2}, (LM(1:2, 1:1), LM(1:1, -1:1))):
+ 0.0  0.0  0.0
+ 0.0  0.0  0.0
 
 # Linear indexing works if the parent array supports it
 julia> for i in eachindex(shm)
@@ -152,16 +142,16 @@ julia> for i in eachindex(shm)
        end
 
 julia> shm
-2×3 SHArray{Complex{Float64},2,Array{Complex{Float64},2},Tuple{LM,LM},2}:
- 1.0+0.0im  3.0+0.0im  5.0+0.0im
- 2.0+0.0im  4.0+0.0im  6.0+0.0im
+2×3 SHArray(::Array{Float64,2}, (LM(1:2, 1:1), LM(1:1, -1:1))):
+ 1.0  3.0  5.0
+ 2.0  4.0  6.0
 
 # Both axes may be indexed using modes
 julia> shm[(1,1),(1,0)]
-3.0 + 0.0im
+3.0
 
 # Any axis may be indexed using the corresponding mode
-julia> shm[(1,1),2]
+julia> shm[(1,1), 2]
 3.0 + 0.0im
 
 # May use any combination of Cartesian and fancy mode indexing
@@ -180,78 +170,49 @@ This is the most general type of an array with any axis possibly being indexed u
 ### Creating an SHArray
 
 ```julia
-julia> sha = SHArray(zeros(1),LM(1:1,0:0))
-1-element SHArray{Float64,1,Array{Float64,1},Tuple{LM},1}:
+julia> sha = SHArray(zeros(1),(LM(1:1,0:0),))
+1-element SHArray(::Array{Float64,1}, (LM(1:1, 0:0),)):
  0.0
 
 # SHVector is an alias for a 1D SHArray that is indexed with modes
 julia> sha isa SHVector
 true
 
-julia> SHArray(LM(1:1,0:0),1:2) # returns an OffsetArray
-1×2 SHArray{Complex{Float64},2,OffsetArrays.OffsetArray{Complex{Float64},2,Array{Complex{Float64},2}},Tuple{LM,UnitRange{Int64}},1} with indices 1:1×1:2:
- 0.0  0.0
-```
-
-If no parent array is specified and the first axis is a subtype of `AbstractArray`, the modes necessarily need to be passed as a `Tuple` to avoid ambiguity. This is because it's otherwise unclear if the first argument is the parent array or the first axis.
-
-```julia
-julia> SHArray((1:1,LM(1:1,0:1))) # second axis stores modes
-1×2 SHArray{Complex{Float64},2,OffsetArrays.OffsetArray{Complex{Float64},2,Array{Complex{Float64},2}},Tuple{UnitRange{Int64},LM},1} with indices 1:1×1:2:
- 0.0  0.0
-
-julia> sha = SHArray(LM(1:1,0:0),ML(1:1,0:1)) # both axes stores modes
-1×2 SHArray{Float64,2,Array{Float64,2},Tuple{LM,ML},2}:
- 0.0  0.0
-
-# SHMatrix is an alias for a 2D SHArray with both axes indexed with modes
-julia> sha isa SHMatrix 
-true
-```
-
-It is also possible to create an empty wrapper around an array. This is essentially equivalent to an array and is retained for completeness.
-```julia
-julia> SHArray(zeros(1,2)) # no modes, equivalent to an Array
-1×2 SHArray{Float64,2,Array{Float64,2},Tuple{Base.OneTo{Int64},Base.OneTo{Int64}},0}:
+julia> SHArray{Float64}((LM(1:1,0:0),1:2)) # supports OffsetArrays
+1×2 SHArray(OffsetArray(::Array{Float64,2}, 1:1, 1:2), (LM(1:1, 0:0), 1:2)) with indices 1:1×1:2:
  0.0  0.0
 ```
 
 The arrays may have mixed axes, where some store spherical harmonic modes and some don't.
 
 ```julia
-julia> sha = SHArray(LM(1:1,0:0),1:2,ML(0:1,0:0)) # mixed axes
-1×2×2 SHArray{Complex{Float64},3,OffsetArrays.OffsetArray{Complex{Float64},3,Array{Complex{Float64},3}},Tuple{LM,UnitRange{Int64},ML},2} with indices 1:1×1:2×1:2:
+julia> sha = SHArray{Float64}((LM(1:1,0:0),-1:1,ML(0:1,0:0)))
+1×3×2 SHArray(OffsetArray(::Array{Float64,3}, 1:1, -1:1, 1:2), (LM(1:1, 0:0), -1:1, ML(0:1, 0:0))) with indices 1:1×-1:1×1:2:
 [:, :, 1] =
- 0.0  0.0
+ 0.0  0.0  0.0
 
 [:, :, 2] =
- 0.0  0.0
+ 0.0  0.0  0.0
 ```
 
 ### Indexing
 
-Indexing is similar to `SHVector` and `SHMatrix`. The performance depends on the number of axes being indexed with modes.
+Indexing is similar to `SHVector` and `SHMatrix`.
 
 ```julia
-julia> sha = SHArray((1:1, LM(1:1,0:1)))
-1×2 SHArray{Complex{Float64},2,OffsetArrays.OffsetArray{Complex{Float64},2,Array{Complex{Float64},2}},Tuple{UnitRange{Int64},LM},1} with indices 1:1×1:2:
- 0.0+0.0im  0.0+0.0im
+julia> SHArray{Float64}((1:1, LM(1:1,0:1)))
+1×2 SHArray(OffsetArray(::Array{Float64,2}, 1:1, 1:2), (1:1, LM(1:1, 0:1))) with indices 1:1×1:2:
+ 0.0  0.0
 
-julia> sha[1,(1,0)]=4 # first index
+julia> sha[1,(1,0)] = 4 # first index
 4
 
-julia> sha[1,2]=5 # second index
+julia> sha[1,2] = 5 # second index
 5
 
 julia> sha
-1×2 SHArray{Complex{Float64},2,OffsetArrays.OffsetArray{Complex{Float64},2,Array{Complex{Float64},2}},Tuple{UnitRange{Int64},LM},1} with indices 1:1×1:2:
- 4.0+0.0im  5.0+0.0im
-
-julia> sha = SHArray(LM(1:1,0:0),1:2,ML(0:1,0:0));
-
-julia> mode1=(1,0);mode2=(1,0); @btime $sha[$mode1,1,$mode2]
-  19.842 ns (0 allocations: 0 bytes)
-0.0 + 0.0im
+1×2 SHArray(OffsetArray(::Array{Float64,2}, 1:1, 1:2), (1:1, LM(1:1, 0:1))) with indices 1:1×1:2:
+ 4.0  5.0
 ```
 
 ## Broadcasting
@@ -259,49 +220,23 @@ julia> mode1=(1,0);mode2=(1,0); @btime $sha[$mode1,1,$mode2]
 `SHArray`s retain information about their modes upon broadcasting. If multiple `SHArray`s are involved in a broadcast operation, the result has the same axes as the one with the most dimensions. The dimensions being broadcasted over, if indexed with modes, have to exactly match for all the `SHArray`s involved in the operation.
 
 ```julia
-julia> s = SHMatrix(LM(1:1,0:0),LM(1:1,-1:0));s .= 4
-1×2 SHArray{Complex{Float64},2,Array{Complex{Float64},2},Tuple{LM,LM},2}:
- 4.0+0.0im  4.0+0.0im
+julia> s = SHMatrix{Float64}(LM(1:1,0:0),LM(1:1,-1:0)); s .= 4
+1×2 SHArray(::Array{Float64,2}, (LM(1:1, 0:0), LM(1:1, -1:0))):
+ 4.0  4.0
 
 julia> s + s
-1×2 SHArray{Complex{Float64},2,Array{Complex{Float64},2},Tuple{LM,LM},2}:
- 8.0+0.0im  8.0+0.0im
+1×2 SHArray(::Array{Float64,2}, (LM(1:1, 0:0), LM(1:1, -1:0))):
+ 8.0  8.0
 
 julia> s .* s
-1×2 SHArray{Complex{Float64},2,Array{Complex{Float64},2},Tuple{LM,LM},2}:
- 16.0+0.0im  16.0+0.0im
+1×2 SHArray(::Array{Float64,2}, (LM(1:1, 0:0), LM(1:1, -1:0))):
+ 16.0  16.0
 
-julia> sv = SHVector(first(modes(s)));sv .= 6;
+julia> sv = SHVector{Float64}(first(SphericalHarmonicArrays.modes(s))); sv .= 6;
 
 julia> s .* sv # Leading dimensions of s and sv are the same
-1×2 SHArray{Complex{Float64},2,Array{Complex{Float64},2},Tuple{LM,LM},2}:
- 24.0+0.0im  24.0+0.0im
+1×2 SHArray(::Array{Float64,2}, (LM(1:1, 0:0), LM(1:1, -1:0))):
+ 24.0  24.0
 ```
 
 Broadcasting operations might be slow, so watch out for performance drops.
-
-```julia
-julia> sm = SHMatrix(LM(1:1,0:0),LM(1:1,-1:0));a = zeros(size(sm));oa = zeros(map(UnitRange,axes(sm)));
-
-# Arrays are the fastest
-julia> @btime @. $a + $a;
-  37.537 ns (1 allocation: 96 bytes)
-
- # OffsetArrays are slightly less performant
-julia> @btime @. $oa + $oa;
-  47.043 ns (2 allocations: 128 bytes)
-
-# SHMatrices are significantly less so
-julia> @btime @. $sm + $sm;
-  80.524 ns (3 allocations: 240 bytes)
-
-julia> sa = SHArray(zeros(1:1,1:2),(LM(1:1,0:0),LM(1:1,-1:0)));
-
-# SHArrays that use an OffsetArray as the parent are even slower
-julia> @btime @. $sa + $sa;
-  111.421 ns (4 allocations: 256 bytes)
-
-# We may operate on the underlying array to regain performance, if the axes permit this.
-julia> @btime parent(parent($sa)) .+ parent(parent($sa));
-  37.295 ns (1 allocation: 96 bytes)
-```
