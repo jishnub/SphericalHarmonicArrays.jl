@@ -457,6 +457,8 @@ end
 function Base.to_indices(s::SHArray, inds::Tuple{Any})
 	Base.to_indices(s, (eachindex(IndexLinear(),s),), inds)
 end
+Base.to_indices(s::SHArray, inds::Tuple{Vararg{Integer}}) = 
+	Base.to_indices(s, axes(s), inds)
 Base.to_indices(s::SHArray, inds::Tuple{Vararg{Union{Integer, CartesianIndex}}}) = 
 	Base.to_indices(s, axes(s), inds)
 

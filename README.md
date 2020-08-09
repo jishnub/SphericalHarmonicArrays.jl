@@ -105,6 +105,19 @@ julia> shv
  56
 ```
 
+Note that in this specific case it is more efficient to define the mode range as 
+`LM(SingleValuedRange(1))`. Using this, we obtain 
+
+```julia
+julia> shv = SHVector(v, LM(SingleValuedRange(1)));
+
+julia> mode=(1,0); @btime $shv[$mode]
+  3.734 ns (0 allocations: 0 bytes)
+2
+```
+
+Indexing operations are significantly more performant for arrays constructed using these special ranges.
+
 ## SHMatrix
 
 An `SHMatrix` is a 2D array with both axes storing spherical harmonic coefficients.
