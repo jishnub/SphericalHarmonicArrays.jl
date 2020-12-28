@@ -451,6 +451,9 @@ const ModeRangeIndexType = Union{Tuple{Integer,Integer},ModeRange,
 @propagate_inbounds function Base.to_indices(s::SHArray, inds::Tuple)
 	Base.to_indices(s, modes(s), inds)
 end
+@propagate_inbounds function Base.to_indices(s::SHArray, inds::Tuple{Vararg{Int}})
+	Base.to_indices(s, axes(s), inds)
+end
 @propagate_inbounds function Base.to_indices(s::SHArray, inds::Tuple{ModeRangeIndexType})
 	Base.to_indices(s, modes(s), inds)
 end
