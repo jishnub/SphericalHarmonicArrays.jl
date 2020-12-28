@@ -1,7 +1,6 @@
 # SphericalHarmonicArrays
 
-[![Build Status](https://travis-ci.com/jishnub/SphericalHarmonicArrays.jl.svg?branch=master)](https://travis-ci.com/jishnub/SphericalHarmonicArrays.jl)
-[![Build Status](https://ci.appveyor.com/api/projects/status/github/jishnub/SphericalHarmonicArrays.jl?svg=true)](https://ci.appveyor.com/project/jishnub/SphericalHarmonicArrays-jl)
+![CI](https://github.com/jishnub/SphericalHarmonicArrays.jl/workflows/CI/badge.svg?branch=master)
 [![Codecov](https://codecov.io/gh/jishnub/SphericalHarmonicArrays.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/jishnub/SphericalHarmonicArrays.jl)
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://jishnub.github.io/SphericalHarmonicArrays.jl/stable)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://jishnub.github.io/SphericalHarmonicArrays.jl/dev)
