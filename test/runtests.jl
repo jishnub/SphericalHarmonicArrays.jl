@@ -314,6 +314,8 @@ end
 	    	@testset "linear" begin
 		    	for i in eachindex(v)
 			    	@test v[i] == 0
+			    	@test v[Int32(i)] == 0
+			    	@test v[Int64(i)] == 0
 			    end
 			    for i in eachindex(IndexCartesian(),v)
 			    	@test v[i] == 0
