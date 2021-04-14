@@ -108,6 +108,7 @@ julia> s2 = SHArray(reshape(1:4, 2, 2), 1 => LM(0:1, 0:0))
 ```
 """
 function SHArray(arr::AbstractArray{<:Any,N}, modes::Vararg{Pair{Int,<:ModeRange}}) where {N}
+    Base.depwarn("constructing an SHArray with pairs of ModeRanges is deprecated. Please use SHArray(arr, modes::Tuple) instead", :SHArray, force = true)
     all(x -> 1 <= x <= N, map(first, modes)) || throw(ArgumentError("all dimensions must be positive and <= $N"))
     allmodes = replaceaxeswithmodes(axes(arr), modes)
     SHArray(arr, allmodes)
@@ -242,8 +243,9 @@ julia> s[(1,0)]
 
 See also: [`SHMatrix`](@ref), [`SHArray`](@ref)
 """
-SHVector(arr::AbstractVector, mode::ModeRange) = SHArray(arr, (mode,))
-SHVector(arr::AbstractVector, modes::Tuple{ModeRange}) = SHArray(arr, modes)
+SHVector
+@deprecate SHVector(A::AbstractVector, mode::ModeRange) SHArray(A, (mode,))
+@deprecate SHVector(A::AbstractVector, modes::Tuple{ModeRange}) SHArray(A, modes)
 
 """
     SHVector{T}(init, modes::SphericalHarmonicModes.ModeRange) where {T}
@@ -262,16 +264,7 @@ julia> SHVector{Missing}(undef, LM(1:1, -1:1))
  missing
  missing
 ```
-"""
-function SHVector{T}(init::ArrayInitializer, modes::Tuple{ModeRange}) where {T}
-    SHVector{T}(init, first(modes))
-end
-function SHVector{T}(init::ArrayInitializer, modes::ModeRange) where {T}
-    arr = Vector{T}(init, length(modes))
-    SHVector(arr, (modes,))
-end
 
-"""
     SHVector{T}(modes::SphericalHarmonicModes.ModeRange) where {T}
     SHVector{T}(modes::Tuple{SphericalHarmonicModes.ModeRange}) where {T}
 
@@ -287,12 +280,28 @@ julia> SHVector{ComplexF64}(LM(0:0, 0:0))
  0.0 + 0.0im
 ```
 """
+function SHVector{T}() where {T} end
+
+function SHVector{T}(init::ArrayInitializer, modes::Tuple{ModeRange}) where {T}
+    Base.depwarn("SHVector{T}(init::$ArrayInitializer, modes::Tuple{ModeRange}) is deprecated, use SHArray{T}(init, modes) instead", :SHVectorTTup)
+    SHVector{T}(init, first(modes))
+end
+function SHVector{T}(init::ArrayInitializer, modes::ModeRange) where {T}
+    Base.depwarn("SHVector{T}(init::$ArrayInitializer, modes::ModeRange) is deprecated, use SHArray{T}(init, modes) instead", :SHVectorT)
+    arr = Vector{T}(init, length(modes))
+    SHVector(arr, (modes,))
+end
+
 function SHVector{T}(modes::Tuple{ModeRange}) where {T}
+    Base.depwarn("SHVector{T}(modes::ModeRange) is deprecated, use zeros(T, modes) instead", :SHVectorTTupmodes)
     s = SHVector{T}(undef, modes)
     fill!(parent(s), zero(eltype(parent(s))))
     s
 end
-SHVector{T}(modes::ModeRange) where {T} = SHVector{T}((modes,))
+function SHVector{T}(modes::ModeRange) where {T}
+    Base.depwarn("SHVector{T}(modes::ModeRange) is deprecated, use zeros(T, modes) instead", :SHVectorTmodes)
+    SHVector{T}((modes,))
+end
 
 const SHMatrix{T, AA<:AbstractMatrix{T}, M<:NTuple{2,ModeRange}} = SHArrayAllModeRange{T,2,AA,M}
 
@@ -320,8 +329,9 @@ julia> s[(1,0),(2,0)]
 
 See also: [`SHVector`](@ref), [`SHArray`](@ref)
 """
-SHMatrix(arr::AbstractMatrix, modes::NTuple{2,ModeRange}) = SHArray(arr, modes)
-SHMatrix(arr::AbstractMatrix, modes::Vararg{ModeRange,2}) = SHArray(arr, modes)
+SHMatrix
+@deprecate SHMatrix(arr::AbstractMatrix, modes::NTuple{2,ModeRange}) SHArray(arr, modes)
+@deprecate SHMatrix(arr::AbstractMatrix, modes::Vararg{ModeRange,2}) SHArray(arr, modes)
 
 """
     SHMatrix{T}(init, modes::NTuple{2,SphericalHarmonicModes.ModeRange}) where {T}
@@ -340,16 +350,7 @@ julia> SHMatrix{Missing}(undef, LM(1:1), LM(0:1, 0:0))
  missing  missing
  missing  missing
 ```
-"""
-function SHMatrix{T}(init::ArrayInitializer, modes::NTuple{2,ModeRange}) where {T}
-    arr = Matrix{T}(init, map(length,modes))
-    SHMatrix(arr, modes)
-end
-function SHMatrix{T}(init::ArrayInitializer, modes::Vararg{ModeRange,2}) where {T}
-    SHMatrix{T}(init, modes)
-end
 
-"""
     SHMatrix{T}(modes::Vararg{SphericalHarmonicModes.ModeRange,2}) where {T}
     SHMatrix{T}(modes::NTuple{2,SphericalHarmonicModes.ModeRange}) where {T}
 
@@ -365,12 +366,28 @@ julia> SHMatrix{ComplexF64}(LM(0:0, 0:0), LM(0:0, 0:0))
  0.0 + 0.0im
 ```
 """
+function SHMatrix{T}() where {T} end
+
+function SHMatrix{T}(init::ArrayInitializer, modes::NTuple{2,ModeRange}) where {T}
+    Base.depwarn("SHMatrix{T}(init::$ArrayInitializer, modes::NTuple{2,ModeRange}) is deprecated, use SHArray{T}(init, modes) instead", :SHMatrixTTup)
+    arr = Matrix{T}(init, map(length,modes))
+    SHMatrix(arr, modes)
+end
+function SHMatrix{T}(init::ArrayInitializer, modes::Vararg{ModeRange,2}) where {T}
+    Base.depwarn("SHMatrix{T}(init::$ArrayInitializer, modes::Vararg{ModeRange,2}) is deprecated, use SHArray{T}(init, modes) instead", :SHMatrixT)
+    SHMatrix{T}(init, modes)
+end
+
 function SHMatrix{T}(modes::NTuple{2,ModeRange}) where {T}
+    Base.depwarn("SHMatrix{T}(modes::NTuple{2,ModeRange}) is deprecated, use zeros(T, modes) instead", :SHMatrixTTupmodes)
     s = SHMatrix{T}(undef, modes)
     fill!(parent(s), zero(eltype(parent(s))))
     s
 end
-SHMatrix{T}(modes::Vararg{ModeRange,2}) where {T} = SHMatrix{T}(modes)
+function SHMatrix{T}(modes::Vararg{ModeRange,2}) where {T}
+    Base.depwarn("SHMatrix{T}(modes::Vararg{ModeRange,2}) is deprecated, use zeros(T, modes) instead", :SHMatrixTmodes)
+    SHMatrix{T}(modes)
+end
 
 # Add methods to Base functions
 
