@@ -472,11 +472,6 @@ const ModeRangeIndexType = Union{Tuple{Integer,Integer},ModeRange,
     (modeindex(first(m), first(I)), to_indices(s, tail(m), tail(I))...)
 end
 
-# throw an informative error if the axis is not indexed by a ModeRange
-@inline function Base.to_indices(::SHArray, ::Tuple, ::Tuple{ModeRangeIndexType,Vararg{Any}})
-    throw(ArgumentError("Attempted to index into a non-SH axis with a mode Tuple"))
-end
-
 @inline function Base.uncolon(inds::Tuple{ModeRange,Vararg{Any}}, I::Tuple{Colon, Vararg{Any}})
     Base.uncolon(axes(first(inds)), I)
 end

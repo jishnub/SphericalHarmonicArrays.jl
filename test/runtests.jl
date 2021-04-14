@@ -435,6 +435,7 @@ end
                 end
                 @test a[CartesianIndices(a)] == a
                 @test a[CartesianIndices(a), 1] == a
+                @test_throws ArgumentError a[1, (0,0)]
             end
             @testset "setindex" begin
                 @testset "linear" begin
