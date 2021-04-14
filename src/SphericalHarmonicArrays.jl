@@ -108,7 +108,7 @@ julia> s2 = SHArray(reshape(1:4, 2, 2), 1 => LM(0:1, 0:0))
 ```
 """
 function SHArray(arr::AbstractArray{<:Any,N}, modes::Vararg{Pair{Int,<:ModeRange}}) where {N}
-    Base.depwarn("constructing an SHArray with pairs of ModeRanges is deprecated. Please use SHArray(arr, modes::Tuple) instead", :SHArray, force = true)
+    Base.depwarn("constructing an SHArray with pairs of ModeRanges is deprecated. Please use SHArray(arr, modes::Tuple) instead", :SHArray)
     all(x -> 1 <= x <= N, map(first, modes)) || throw(ArgumentError("all dimensions must be positive and <= $N"))
     allmodes = replaceaxeswithmodes(axes(arr), modes)
     SHArray(arr, allmodes)
