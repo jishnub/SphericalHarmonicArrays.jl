@@ -454,41 +454,31 @@ const ModeRangeIndexType = Union{Tuple{Integer,Integer},ModeRange,
                             Tuple{AbstractUnitRange{<:Integer},
                             AbstractUnitRange{<:Integer}}}
 
-@inline function Base.to_indices(s::SHArray, inds::Tuple)
-    # use modes instead of axes for indexing
-    Base.to_indices(s, modes(s), inds)
-end
-# Linear indexing
-@inline function Base.to_indices(s::SHVector, inds::Tuple{Any})
-    Base.to_indices(s, modes(s), inds)
-end
+# use modes instead of axes for indexing in general, so that we may convert tuples of modes to indices
+@inline Base.to_indices(s::SHArray, I::Tuple) = to_indices(s, modes(s), I)
+@inline Base.to_indices(s::SHVector, I::Tuple{ModeRangeIndexType}) = to_indices(s, modes(s), I)
 
 # methods to avoid ambiguity
 @inline Base.to_indices(A::SHArray, I::Tuple{Vararg{Int}}) = I
-@inline Base.to_indices(A::SHVector, I::Tuple{Int}) = I
 @inline Base.to_indices(A::SHArray, I::Tuple{Vararg{Integer}}) = to_indices(parent(A), I)
-@inline Base.to_indices(A::SHVector, I::Tuple{Integer}) = to_indices(parent(A), I)
 @inline Base.to_indices(A::SHArray, ::Tuple{}) = ()
-@inline Base.to_indices(s::SHArray, inds::Tuple{Any}) = to_indices(s, (eachindex(IndexLinear(),s),), inds)
+@inline Base.to_indices(s::SHArray, I::Tuple{Any}) = to_indices(parent(s), I)
 
-@inline Base.to_indices(s::SHArray, inds::Tuple{Vararg{Union{Integer, CartesianIndex}}}) =
-    to_indices(parent(s), inds)
-@inline Base.to_indices(s::SHVector, inds::Tuple{Union{Integer, CartesianIndex}}) =
-    to_indices(parent(s), inds)
-
-@inline function Base.uncolon(inds::Tuple{ModeRange,Vararg{Any}}, I::Tuple{Colon, Vararg{Any}})
-    Base.uncolon(axes(first(inds)), I)
-end
+@inline Base.to_indices(s::SHArray, I::Tuple{Vararg{Union{Integer, CartesianIndex}}}) =
+    to_indices(parent(s), I)
 
 @inline function Base.to_indices(s::SHArray, m::Tuple{ModeRange,Vararg{Any}},
-    inds::Tuple{ModeRangeIndexType,Vararg{Any}})
-    (modeindex(first(m), first(inds)), to_indices(s, tail(m), tail(inds))...)
+    I::Tuple{ModeRangeIndexType,Vararg{Any}})
+    (modeindex(first(m), first(I)), to_indices(s, tail(m), tail(I))...)
 end
 
 # throw an informative error if the axis is not indexed by a ModeRange
-@inline function Base.to_indices(s::SHArray, m::Tuple{RangeOrInteger,Vararg{Any}},
-    inds::Tuple{ModeRangeIndexType,Vararg{Any}})
+@inline function Base.to_indices(::SHArray, ::Tuple, ::Tuple{ModeRangeIndexType,Vararg{Any}})
     throw(ArgumentError("Attempted to index into a non-SH axis with a mode Tuple"))
+end
+
+@inline function Base.uncolon(inds::Tuple{ModeRange,Vararg{Any}}, I::Tuple{Colon, Vararg{Any}})
+    Base.uncolon(axes(first(inds)), I)
 end
 
 # getindex
@@ -496,18 +486,9 @@ end
     parent(s)[to_indices(s, I)...]
 end
 
-# Linear indexing with one integer
-@propagate_inbounds Base.getindex(s::SHArray, ind::Int) = parent(s)[ind]
-
 # setindex
 @propagate_inbounds function Base.setindex!(s::SHArray, val, I...)
     parent(s)[to_indices(s, I)...] = val
-    s
-end
-
-# Linear indexing with one integer
-@propagate_inbounds function Base.setindex!(s::SHArray, val, ind::Int)
-    parent(s)[ind] = val
     s
 end
 

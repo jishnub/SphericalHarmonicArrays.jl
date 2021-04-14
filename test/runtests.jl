@@ -333,6 +333,8 @@ end
                 for i in eachindex(IndexCartesian(), v)
                     @test v[i] == lininds[i]
                 end
+                @test v[CartesianIndices(v)] == v
+                @test v[CartesianIndices(v), 1] == v
             end
             @testset "mode_lm" begin
                 for (ind,m) in enumerate(mode_lm)
@@ -409,7 +411,10 @@ end
                 @test to_indices(a, (1,)) == (1,)
                 @test to_indices(a, (big(1),)) == (1,)
                 @testset "linear" begin
-                    for i in eachindex(a)
+                    for i in eachindex(IndexLinear(), a)
+                        @test a[i] == 0
+                    end
+                    for i in eachindex(IndexCartesian(), a)
                         @test a[i] == 0
                     end
                 end
@@ -428,6 +433,8 @@ end
                     @test a[:,:] == zeros(size(a))
                     @test a[:] == zeros(length(a))
                 end
+                @test a[CartesianIndices(a)] == a
+                @test a[CartesianIndices(a), 1] == a
             end
             @testset "setindex" begin
                 @testset "linear" begin
