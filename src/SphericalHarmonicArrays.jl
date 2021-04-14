@@ -56,7 +56,7 @@ julia> s = SHArray(reshape(1:4, 2, 2), (LM(0:1, 0:0), 1:2))
  2  4
 
 julia> s.modes[1] |> collect
-2-element Array{Tuple{Int64,Int64},1}:
+2-element $(Array{Tuple{Int64,Int64},1}):
  (0, 0)
  (1, 0)
 
@@ -149,7 +149,7 @@ The elements of the parent array are set according to the initializer `init`.
 julia> import SphericalHarmonicArrays: LM
 
 julia> SHArray{Missing}(undef, (LM(0:1, 0:0), 2))
-2×2 SHArray(::Array{Missing,2}, (LM(0:1, 0:0), Base.OneTo(2))):
+2×2 SHArray(::$(Array{Missing,2}), (LM(0:1, 0:0), Base.OneTo(2))):
  missing  missing
  missing  missing
 ```
@@ -179,12 +179,12 @@ The elements are set to zero.
 julia> import SphericalHarmonicArrays: LM
 
 julia> SHArray{Float64}((LM(1:1, 0:1), LM(0:0, 0:0)))
-2×1 SHArray(::Array{Float64,2}, (LM(1:1, 0:1), LM(0:0, 0:0))):
+2×1 SHArray(::$(Array{Float64,2}), (LM(1:1, 0:1), LM(0:0, 0:0))):
  0.0
  0.0
 
 julia> SHArray{Float64}((LM(1:1, 0:1), 2))
-2×2 SHArray(::Array{Float64,2}, (LM(1:1, 0:1), Base.OneTo(2))):
+2×2 SHArray(::$(Array{Float64,2}), (LM(1:1, 0:1), Base.OneTo(2))):
  0.0  0.0
  0.0  0.0
 ```
@@ -231,7 +231,7 @@ julia> s = SHVector(1:3, LM(1:1))
  3
 
 julia> s.modes[1] |> collect
-3-element Array{Tuple{Int64,Int64},1}:
+3-element $(Array{Tuple{Int64,Int64},1}):
  (1, -1)
  (1, 0)
  (1, 1)
@@ -257,7 +257,7 @@ The default value is set by the initializer `init`.
 julia> import SphericalHarmonicArrays: LM
 
 julia> SHVector{Missing}(undef, LM(1:1, -1:1))
-3-element SHArray(::Array{Missing,1}, (LM(1:1, -1:1),)):
+3-element SHArray(::$(Array{Missing,1}), (LM(1:1, -1:1),)):
  missing
  missing
  missing
@@ -283,7 +283,7 @@ The elements are set to zero.
 julia> import SphericalHarmonicArrays: LM
 
 julia> SHVector{ComplexF64}(LM(0:0, 0:0))
-1-element SHArray(::Array{Complex{Float64},1}, (LM(0:0, 0:0),)):
+1-element SHArray(::$(Array{Complex{Float64},1}), (LM(0:0, 0:0),)):
  0.0 + 0.0im
 ```
 """
@@ -335,7 +335,7 @@ The default value is set by the initializer `init`.
 julia> import SphericalHarmonicArrays: LM
 
 julia> SHMatrix{Missing}(undef, LM(1:1), LM(0:1, 0:0))
-3×2 SHArray(::Array{Missing,2}, (LM(1:1, -1:1), LM(0:1, 0:0))):
+3×2 SHArray(::$(Array{Missing,2}), (LM(1:1, -1:1), LM(0:1, 0:0))):
  missing  missing
  missing  missing
  missing  missing
@@ -361,7 +361,7 @@ The elements are set to zero.
 julia> import SphericalHarmonicArrays: LM
 
 julia> SHMatrix{ComplexF64}(LM(0:0, 0:0), LM(0:0, 0:0))
-1×1 SHArray(::Array{Complex{Float64},2}, (LM(0:0, 0:0), LM(0:0, 0:0))):
+1×1 SHArray(::$(Array{Complex{Float64},2}), (LM(0:0, 0:0), LM(0:0, 0:0))):
  0.0 + 0.0im
 ```
 """
