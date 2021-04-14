@@ -280,8 +280,6 @@ julia> SHVector{ComplexF64}(LM(0:0, 0:0))
  0.0 + 0.0im
 ```
 """
-function SHVector{T}() where {T} end
-
 function SHVector{T}(init::ArrayInitializer, modes::Tuple{ModeRange}) where {T}
     Base.depwarn("SHVector{T}(init::$ArrayInitializer, modes::Tuple{ModeRange}) is deprecated, use SHArray{T}(init, modes) instead", :SHVectorTTup)
     SHVector{T}(init, first(modes))
@@ -366,8 +364,6 @@ julia> SHMatrix{ComplexF64}(LM(0:0, 0:0), LM(0:0, 0:0))
  0.0 + 0.0im
 ```
 """
-function SHMatrix{T}() where {T} end
-
 function SHMatrix{T}(init::ArrayInitializer, modes::NTuple{2,ModeRange}) where {T}
     Base.depwarn("SHMatrix{T}(init::$ArrayInitializer, modes::NTuple{2,ModeRange}) is deprecated, use SHArray{T}(init, modes) instead", :SHMatrixTTup)
     arr = Matrix{T}(init, map(length,modes))
