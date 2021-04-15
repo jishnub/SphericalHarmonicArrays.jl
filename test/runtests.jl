@@ -32,29 +32,23 @@ end
         checkarrs(sa, arr)
         sa = SHArray(arr, (:,))
         checkarrs(sa, arr)
-
-        sa = SHArray(arr)
-        checkarrs(sa, arr)
     end
     @testset "one SH axis" begin
         arr = zeros(ComplexF64, length(mode_lm))
-        @testset "SHArray" begin
-            sa = SHArray{ComplexF64}((mode_lm,))
-            @test sa.modes == (mode_lm,)
+        sa = SHArray{ComplexF64}(undef, (mode_lm,))
+        @test sa.modes == (mode_lm,)
 
-            sa = SHArray(arr,(mode_lm,))
-            @test sa.modes == (mode_lm,)
-        end
-        @testset "SHVector" begin
-            @test SHVector{ComplexF64}(mode_lm) == arr
-            @test SHVector{Float64}(mode_lm) == real(arr)
-            @test SHVector(arr, mode_lm) == arr
+        sa = SHArray(arr, (mode_lm,))
+        @test sa.modes == (mode_lm,)
 
-            sv = SHVector(arr, mode_lm)
-            svundef = SHVector{eltype(arr)}(undef, mode_lm)
-            @test svundef.modes == sv.modes
-            @test axes(parent(svundef)) == axes(parent(sv))
-        end
+        @test fill!(SHArray{ComplexF64}(undef, mode_lm), zero(ComplexF64)) == arr
+        @test fill!(SHArray{Float64}(undef, mode_lm), zero(Float64)) == real(arr)
+        @test SHArray(arr, mode_lm) == arr
+
+        sv = SHArray(arr, mode_lm)
+        svundef = SHArray{eltype(arr)}(undef, mode_lm)
+        @test svundef.modes == sv.modes
+        @test axes(parent(svundef)) == axes(parent(sv))
     end
     @testset "2D mixed axes" begin
         @testset "first SH" begin
@@ -66,7 +60,7 @@ end
                 @test sa.modes == ax
             end
 
-            sa = SHArray{ComplexF64}(ax)
+            sa = fill!(SHArray{ComplexF64}(undef, ax), zero(ComplexF64))
             testSA(sa, arr, ax)
 
             sa = SHArray(arr, ax)
@@ -77,26 +71,22 @@ end
             testSA(sa, arr, ax)
             @test parent(sa) === arr
 
-            sa = SHArray(arr, 1=>mode_lm)
-            testSA(sa, arr, ax)
-            @test parent(sa) === arr
-
-            @test SHArray{ComplexF64}(ax) == sa
-            @test SHArray{Float64}(ax) == SHArray(real(arr), ax)
+            @test fill!(SHArray{ComplexF64}(undef, ax), zero(ComplexF64)) == sa
+            @test fill!(SHArray{Float64}(undef, ax), zero(Float64)) == SHArray(real(arr), ax)
             @test SHArray(arr, ax) == sa
 
             saundef = SHArray{ComplexF64}(undef, ax)
             @test saundef.modes == sa.modes
             @test axes(parent(saundef)) == axes(parent(sa))
 
-            sa = SHArray{ComplexF64}((mode_lm, 2))
+            sa = SHArray{ComplexF64}(undef, (mode_lm, 2))
             @test axes(sa) == (1:length(mode_lm), 1:2)
         end
         @testset "second SH" begin
             arr = zeros(ComplexF64, 2,length(mode_lm),)
             ax = (1:2, mode_lm)
-            @test SHArray{ComplexF64}(ax) == arr
-            @test SHArray{Float64}(ax) == real(arr)
+            @test fill!(SHArray{ComplexF64}(undef, ax), zero(ComplexF64)) == arr
+            @test fill!(SHArray{Float64}(undef, ax), zero(Float64)) == real(arr)
             @test SHArray(arr, ax) == arr
 
             @testset "Errors" begin
@@ -107,60 +97,55 @@ end
         @testset "both SH" begin
             arr = zeros(ComplexF64, length(mode_lm), length(mode_lm))
             ax = (mode_lm, mode_lm)
-            @test SHArray{ComplexF64}(ax) == arr
-            @test SHArray{Float64}(ax) == real(arr)
+            @test fill!(SHArray{ComplexF64}(undef, ax), zero(ComplexF64)) == arr
+            @test fill!(SHArray{Float64}(undef, ax), zero(ComplexF64)) == real(arr)
             @test SHArray(arr, ax) == arr
-
-            ax = (mode_lm, mode_ml)
-            sa = SHArray(arr, 1 => mode_lm, 2 => mode_ml)
-            @test sa.modes === ax
-            @test sa.parent === arr
 
             @testset "Errors" begin
                 ax = (LM(l_range(mode_lm)),LM(l_range(mode_lm)))
                 @test_throws ArgumentError SHArray(arr, ax)
             end
         end
-        @testset "SHMatrix" begin
+        @testset "SHArray" begin
             function testSHMatrix(T, s, arr, mode1, mode2)
-                @test s isa SHMatrix{T}
+                @test s isa SHArray{T}
                 @test s == arr
                 @test parent(s) === arr
                 @test shdims(s) == (1, 2)
                 @test modes(s) == (mode1, mode2)
             end
             function testSHMatrix(T, s, mode1, mode2)
-                @test s isa SHMatrix{T}
+                @test s isa SHArray{T}
                 @test shdims(s) == (1, 2)
                 @test modes(s) == (mode1, mode2)
             end
             function testSHMatrix(mode1, mode2)
                 arr = zeros(ComplexF64, length(mode1),length(mode2))
 
-                sm1 = SHMatrix(arr, mode1, mode2)
+                sm1 = SHArray(arr, mode1, mode2)
                 testSHMatrix(ComplexF64, sm1, arr, mode1, mode2)
 
-                sm2 = SHMatrix(arr, (mode1, mode2))
+                sm2 = SHArray(arr, (mode1, mode2))
                 testSHMatrix(ComplexF64, sm2, arr, mode1, mode2)
 
                 @test sm1 == sm2
 
-                sm3 = SHMatrix{ComplexF64}(mode1, mode2)
+                sm3 = fill!(SHArray{ComplexF64}(undef, mode1, mode2), zero(ComplexF64))
                 testSHMatrix(ComplexF64, sm3, mode1, mode2)
                 @test sm3 == arr
                 @test all(iszero, sm3)
 
-                sm4 = SHMatrix{ComplexF64}((mode1, mode2))
+                sm4 = fill!(SHArray{ComplexF64}(undef, (mode1, mode2)), zero(ComplexF64))
                 testSHMatrix(ComplexF64, sm4, mode1, mode2)
                 @test sm4 == sm3
                 @test all(iszero, sm4)
 
-                sm5 = SHMatrix{Float64}(mode1, mode2)
+                sm5 = fill!(SHArray{Float64}(undef, mode1, mode2), zero(Float64))
                 testSHMatrix(Float64, sm5, mode1, mode2)
                 @test sm5 == real(arr)
                 @test all(iszero, sm5)
 
-                sm6 = SHMatrix{Float64}((mode1, mode2))
+                sm6 = fill!(SHArray{Float64}(undef, (mode1, mode2)), zero(Float64))
                 testSHMatrix(Float64, sm6, mode1, mode2)
                 @test sm6 == sm5
                 @test all(iszero, sm6)
@@ -192,51 +177,16 @@ end
             @testset "L2L1Triangle L2L1Triangle" begin
                 testSHMatrix(mode_l₂l₁,mode_l₂l₁)
             end
-
-            sm = SHMatrix{ComplexF64}((mode_lm, mode_lm))
-            smundef = SHMatrix{ComplexF64}(undef, (mode_lm, mode_lm))
-            @test smundef.modes == sm.modes
-            @test axes(parent(smundef)) == axes(parent(sm))
-        end
-        @testset "Pairs" begin
-            mode1 = LM(1:1, 0:1)
-            mode2 = LM(2:2, 0:2)
-            mode3 = LM(2:2)
-
-            s = SHArray(zeros(map(length, (mode1, mode2))), 1=>mode1, 2=>mode2)
-            @test s.modes == (mode1, mode2)
-
-            s = SHArray(zeros(map(length, (mode1, mode2))), 2=>mode2, 1=>mode1)
-            @test s.modes == (mode1, mode2)
-
-            @test_throws ArgumentError SHArray(zeros(map(length, (mode1, mode2))), 2=>mode2, 3=>mode1)
-
-            # type-unstable version
-            s = SHArray(zeros(map(length, (mode1, mode3))), 1=>mode1, 2=>mode3)
-            @test s.modes == (mode1, mode3)
         end
     end
     @testset "2D none SH" begin
-        sa = SHArray{ComplexF64}((2, 2))
+        sa = SHArray{ComplexF64}(undef, (2, 2))
         @test axes(sa) == (1:2, 1:2)
         @test sa.modes == (1:2, 1:2)
     end
+
     @testset "ArrayInitializers" begin
         @testset "undef" begin
-            @testset "SHVector" begin
-                sha = SHVector{Vector}(undef,(mode_lm,))
-                @test all(i -> !isassigned(sha, i), eachindex(sha))
-                @test size(sha) == (length(mode_lm),)
-                sha = SHVector{Vector}(undef, mode_lm)
-                @test all(i -> !isassigned(sha, i), eachindex(sha))
-            end
-            @testset "SHMatrix" begin
-               sha = SHMatrix{Vector}(undef,(mode_lm, mode_ml))
-               @test all(i -> !isassigned(sha, i), eachindex(sha))
-               @test size(sha) == (length(mode_lm),length(mode_ml))
-               sha = SHMatrix{Vector}(undef, mode_lm, mode_ml)
-               @test all(i -> !isassigned(sha, i), eachindex(sha))
-            end
             @testset "SHArray" begin
                sha = SHArray{Vector,2}(undef,(1:2, mode_ml))
                @test all(i -> !isassigned(sha, i), eachindex(sha))
@@ -272,7 +222,7 @@ end
     mode_ml = ML(0:1, 0:0)
 
     arr = zeros(length(mode_lm),length(mode_ml))
-    sm = SHMatrix(arr,(mode_lm, mode_ml))
+    sm = SHArray(arr,(mode_lm, mode_ml))
 
     @testset "parent" begin
         @test parent(sm) == arr
@@ -333,7 +283,7 @@ end
         @test s[] == 3
     end
     @testset "1D SH" begin
-        v = SHVector{ComplexF64}(mode_lm)
+        v = SHArray{ComplexF64}(undef, mode_lm)
         for i in eachindex(parent(v))
             parent(v)[i] = i
         end
@@ -385,45 +335,9 @@ end
             end
         end
     end
-    @testset "1D normal" begin
-        v = SHArray(zeros(length(mode_lm)))
-        @testset "getindex" begin
-            @testset "linear" begin
-                for i in eachindex(v)
-                    @test v[i] == 0
-                end
-            end
-            @testset "mode_lm" begin
-                for m in mode_lm
-                    @test_throws ArgumentError v[m]
-                end
-            end
-            @testset "colon" begin
-                @test all(@. v[:] == 0)
-                @test v[:] == zeros(size(v))
-            end
-        end
-        @testset "setindex" begin
-            @testset "linear" begin
-                for i in eachindex(v)
-                    v[i] = i
-                    @test v[i] == i
-                end
-            end
-            @testset "mode_lm" begin
-                for (i, m) in enumerate(mode_lm)
-                    @test_throws ArgumentError v[m] = i
-                end
-            end
-            @testset "colon" begin
-                v[:] .= 4
-                @test all(@. v[:] == 4)
-            end
-        end
-    end
     @testset "2D mixed axes" begin
         @testset "first SH" begin
-            a = SHArray{ComplexF64}((mode_lm, 1:2))
+            a = fill!(SHArray{ComplexF64}(undef, (mode_lm, 1:2)), zero(ComplexF64))
             @testset "getindex" begin
                 @test to_indices(a, (1,)) == (1,)
                 @test to_indices(a, (big(1),)) == (1,)
@@ -494,7 +408,7 @@ end
             end
         end
         @testset "second SH" begin
-            a = SHArray{ComplexF64}((1:2, mode_lm))
+            a = zeros(ComplexF64, (1:2, mode_lm))
             @testset "getindex" begin
                 @testset "linear" begin
                     for i in eachindex(a)
@@ -557,7 +471,7 @@ end
             end
         end
         @testset "both SH" begin
-            a = SHArray{ComplexF64}((mode_lm, mode_lm))
+            a = zeros(ComplexF64, (mode_lm, mode_lm))
             @testset "getindex" begin
                 @testset "linear" begin
                     for i in eachindex(a)
@@ -621,8 +535,8 @@ end
         end
     end
     @testset "nested" begin
-        s = SHVector{SHVector}(undef, LM(1:1));
-        v = SHVector{ComplexF64}(LM(1:2))
+        s = SHArray{SHArray}(undef, LM(1:1));
+        v = zeros(ComplexF64, LM(1:2))
         @testset "linear" begin
             for (ind, m) in enumerate(first(shmodes(s)))
                 s[ind] = v
@@ -638,7 +552,7 @@ end
         end
     end
     @testset "colon and ranges" begin
-        sa = SHArray{ComplexF64}((mode_lm, 2))
+        sa = zeros(ComplexF64, (mode_lm, 2))
         for i in eachindex(sa)
             sa[i] = i
         end
@@ -687,11 +601,11 @@ end
         @test shdims(SA) == shdims(arr)
     end
 
-    SA = SHArray{ComplexF64}((mode_lm, 1:2, mode_ml))
+    SA = zeros(ComplexF64, (mode_lm, 1:2, mode_ml))
     testsimilar(SA)
-    v = SHVector{ComplexF64}(mode_lm)
+    v = zeros(ComplexF64, mode_lm)
     testsimilar(v)
-    M = SHMatrix{ComplexF64}(mode_lm, mode_lm)
+    M = zeros(ComplexF64, mode_lm, mode_lm)
     testsimilar(M)
 
     SA = SHArray(Diagonal([1,2]), (LM(0:1, 0:0),1:2))
@@ -701,14 +615,14 @@ end
 
 @testset "nested" begin
     m = LM(0:2)
-    sharr = SHVector{ComplexF64}(m)
+    sharr = zeros(ComplexF64, m)
     v = [sharr, sharr]
     n = length(v)
     @test typeof(v) == Array{typeof(sharr),1}
     modesv = LM(n:n, 1:n)
-    shv = SHVector(v, modesv) # get the number of modes to match
+    shv = SHArray(v, modesv) # get the number of modes to match
     @test typeof(shv) == SHArray{typeof(sharr),1, typeof(v),Tuple{typeof(modesv)}}
-    @test_throws ArgumentError SHVector(v, LM(0:0, 0:0))
+    @test_throws ArgumentError SHArray(v, LM(0:0, 0:0))
 end
 
 @testset "broadcasting" begin
@@ -719,13 +633,13 @@ end
     @testset "same ndims" begin
         @testset "SHArray SHArray" begin
             @testset "first axis" begin
-                s = SHArray{ComplexF64}((LM(0:1),-1:1)); @. s = 2
+                s = zeros(ComplexF64, (LM(0:1),-1:1)); @. s = 2
                 t = similar(s); @. t = 4
-                s2 = SHArray{ComplexF64}((LM(2:2,-2:1),-1:1)) # dimensions and mode types match but different modes
-                s3 = SHArray{ComplexF64}((ML(2:2,-2:1),-1:1)) # dimensions and modes match but different mode types
-                s4 = SHArray{ComplexF64}((LM(0:2),-1:1)) # dimensions don't match
-                s5 = SHArray{ComplexF64}((-1:2, LM(1:1))); # sizes match but axes don't
-                s6 = SHArray{ComplexF64}((LM(0:1),0:2)); # sizes match but axes don't
+                s2 = zeros(ComplexF64, (LM(2:2,-2:1),-1:1)) # dimensions and mode types match but different modes
+                s3 = zeros(ComplexF64, (ML(2:2,-2:1),-1:1)) # dimensions and modes match but different mode types
+                s4 = zeros(ComplexF64, (LM(0:2),-1:1)) # dimensions don't match
+                s5 = zeros(ComplexF64, (-1:2, LM(1:1))); # sizes match but axes don't
+                s6 = zeros(ComplexF64, (LM(0:1),0:2)); # sizes match but axes don't
 
                 u = s + t
                 @test all(u .== s[1]+t[1])
@@ -756,7 +670,7 @@ end
                 @test_throws DimensionMismatch s + s6
             end
             @testset "second axis" begin
-                s = SHArray{ComplexF64}((-1:1, LM(0:1))); @. s = 2
+                s = zeros(ComplexF64, (-1:1, LM(0:1))); @. s = 2
                 t = similar(s); @. t = 4
 
                 u = s + t
@@ -783,7 +697,7 @@ end
             end
         end
         @testset "SHArray Array" begin
-            s = SHArray{ComplexF64}((-1:1, LM(0:1))); @. s = 2
+            s = zeros(ComplexF64, (-1:1, LM(0:1))); @. s = 2
             t = zeros(axes(s)); @. t = 5
 
             u = s + t
@@ -810,9 +724,9 @@ end
         end
     end
     @testset "different ndims" begin
-        @testset "SHArray SHVector" begin
-            s = SHArray{ComplexF64}((LM(0:1),-1:1)); @. s = 2
-            t = SHVector{ComplexF64}(first(modes(s))); @. t = 4
+        @testset "SHArray SHArray" begin
+            s = zeros(ComplexF64, (LM(0:1),-1:1)); @. s = 2
+            t = zeros(ComplexF64, first(modes(s))); @. t = 4
 
             u = @. s + t
             @test all(u .== s[1]+t[1])
@@ -833,7 +747,7 @@ end
             @test modes(u)==modes(s)
         end
         @testset "SHArray Vector" begin
-            s = SHArray{ComplexF64}((LM(0:1),-1:1)); @. s = 2
+            s = zeros(ComplexF64, (LM(0:1),-1:1)); @. s = 2
             t = zeros(axes(s, 1)); @. t = 4
 
             u = @. s + t
@@ -876,8 +790,8 @@ end
     end
 
     @testset "SHArrayOnlyFirstAxis" begin
-        @testset "SHVector" begin
-            sv = SHVector{ComplexF64}(mode_lm)
+        @testset "SHArray" begin
+            sv = zeros(ComplexF64, mode_lm)
             @test modes(sv) == (mode_lm,)
             @test shmodes(sv) == (mode_lm,)
             @test shdims(sv) == (1,)
@@ -898,7 +812,7 @@ end
     showerror(io, SphericalHarmonicArrays.ModeMismatchError(LM(1:2), LM(1:4)))
     showerror(io, SphericalHarmonicArrays.ModeMismatchError(LM(1:2), ML(1:4)))
 
-    sa = SHArray(zeros(2))
+    sa = zeros(LM(0:1))
     Base.showarg(io, sa, false)
 
     take!(io)
