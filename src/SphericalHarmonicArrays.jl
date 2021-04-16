@@ -78,6 +78,8 @@ end
 
 moderangeaxes(m::ModeRange) = axes(m, 1)
 moderangeaxes(m) = to_axis(m) # convert size to axes
+moderangelength(m::ModeRange) = length(m)
+moderangelength(m) = m
 to_axis(n::Integer) = Base.OneTo(n)
 to_axis(n) = n
 axislength(n::Integer) = n
@@ -388,7 +390,13 @@ end
 # Add methods to Base functions
 
 Base.parent(s::SHArray) = s.parent
-Base.similar(arr::T) where {T<:SHArray} = T(similar(parent(arr)), modes(arr))
+
+Base.similar(arr::SHArray) = similar(arr, eltype(arr), modes(arr))
+Base.similar(arr::SHArray, T::Type) = similar(arr, T, modes(arr))
+Base.similar(arr::AbstractArray, modes::RangeOrInteger...) = similar(arr, eltype(arr), modes)
+Base.similar(arr::AbstractArray, T::Type, modes::RangeOrInteger...) = similar(arr, T, modes)
+Base.similar(arr::AbstractArray, T::Type, modes::Tuple{Vararg{RangeOrInteger}}) = SHArray(similar(parent(arr), T, map(moderangelength, modes)), modes)
+
 Base.dataids(A::SHArray) = Base.dataids(parent(A)) # needed for fast broadcasting
 function Broadcast.broadcast_unalias(dest::SHArray, src::SHArray)
     parent(dest) === parent(src) ? src : Broadcast.unalias(dest, src)
