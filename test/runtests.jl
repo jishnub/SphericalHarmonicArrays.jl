@@ -640,10 +640,34 @@ end
     mode_l₂l₁ = L2L1Triangle(0:2, 2,0:2)
 
     function testsimilar(arr)
-        @test similar(arr) isa typeof(arr)
-        @test size(parent(similar(arr))) == size(parent(arr))
-        @test modes(similar(arr)) == modes(arr)
-        @test shdims(similar(arr)) == shdims(arr)
+        SA = similar(arr)
+        SAT = similar(arr, eltype(arr))
+        SATM = similar(arr, eltype(arr), modes(arr))
+        @test SA isa typeof(arr)
+        @test SAT isa typeof(arr)
+        @test size(parent(SA)) == size(parent(arr))
+        @test modes(SA) == modes(arr)
+        @test shdims(SA) == shdims(arr)
+        @test modes(SAT) == modes(arr)
+        @test shdims(SAT) == shdims(arr)
+        @test modes(SATM) == modes(arr)
+        @test shdims(SATM) == shdims(arr)
+
+        @test axes(SA) == axes(arr)
+        @test axes(SAT) == axes(arr)
+        @test axes(SATM) == axes(arr)
+
+        SA = similar(zeros(0), Int, modes(arr)...)
+        @test eltype(SA) == Int
+        @test axes(SA) == axes(arr)
+        @test modes(SA) == modes(arr)
+        @test shdims(SA) == shdims(arr)
+
+        SA = similar(zeros(0), modes(arr)...)
+        @test eltype(SA) == eltype(SA)
+        @test axes(SA) == axes(arr)
+        @test modes(SA) == modes(arr)
+        @test shdims(SA) == shdims(arr)
     end
 
     SA = SHArray{ComplexF64}((mode_lm, 1:2, mode_ml))
