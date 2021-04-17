@@ -221,31 +221,48 @@ end
         @test axes(sa) == (1:2, 1:2)
         @test sa.modes == (1:2, 1:2)
     end
-    @testset "undef" begin
-        @testset "SHVector" begin
+    @testset "ArrayInitializers" begin
+        @testset "undef" begin
+            @testset "SHVector" begin
+                sha = SHVector{Vector}(undef,(mode_lm,))
+                @test all(i -> !isassigned(sha, i), eachindex(sha))
+                @test size(sha) == (length(mode_lm),)
+                sha = SHVector{Vector}(undef, mode_lm)
+                @test all(i -> !isassigned(sha, i), eachindex(sha))
+            end
+            @testset "SHMatrix" begin
+               sha = SHMatrix{Vector}(undef,(mode_lm, mode_ml))
+               @test all(i -> !isassigned(sha, i), eachindex(sha))
+               @test size(sha) == (length(mode_lm),length(mode_ml))
+               sha = SHMatrix{Vector}(undef, mode_lm, mode_ml)
+               @test all(i -> !isassigned(sha, i), eachindex(sha))
+            end
+            @testset "SHArray" begin
+               sha = SHArray{Vector,2}(undef,(1:2, mode_ml))
+               @test all(i -> !isassigned(sha, i), eachindex(sha))
+               @test size(sha) == (2, length(mode_ml))
 
-            sha = SHVector{Vector}(undef,(mode_lm,))
-            @test !any([isassigned(sha, i) for i in eachindex(sha)])
-            @test size(sha) == (length(mode_lm),)
-            sha = SHVector{Vector}(undef, mode_lm)
-            @test !any([isassigned(sha, i) for i in eachindex(sha)])
+               sha = SHArray{Vector}(undef,(1:2, mode_ml))
+               @test all(i -> !isassigned(sha, i), eachindex(sha))
+               @test size(sha) == (2, length(mode_ml))
+
+               sha = SHArray{Vector,2}(undef, 2, mode_ml)
+               @test all(i -> !isassigned(sha, i), eachindex(sha))
+               @test size(sha) == (2, length(mode_ml))
+
+               sha = SHArray{Vector}(undef, 2, mode_ml)
+               @test all(i -> !isassigned(sha, i), eachindex(sha))
+               @test size(sha) == (2, length(mode_ml))
+            end
         end
-        @testset "SHMatrix" begin
+        @testset "missing" begin
+            sha = SHArray{Union{Vector, Missing}}(missing, 2, mode_ml)
+            @test all(i -> isassigned(sha, i), eachindex(sha))
+            @test size(sha) == (2, length(mode_ml))
 
-           sha = SHMatrix{Vector}(undef,(mode_lm, mode_ml))
-           @test !any([isassigned(sha, i) for i in eachindex(sha)])
-           @test size(sha) == (length(mode_lm),length(mode_ml))
-           sha = SHMatrix{Vector}(undef, mode_lm, mode_ml)
-           @test !any([isassigned(sha, i) for i in eachindex(sha)])
-        end
-        @testset "SHArray" begin
-           sha = SHArray{Vector, 2}(undef,(1:2, mode_ml))
-           @test !any([isassigned(sha, i) for i in eachindex(sha)])
-           @test size(sha) == (2, length(mode_ml))
-
-           sha = SHArray{Vector}(undef,(1:2, mode_ml))
-           @test !any([isassigned(sha, i) for i in eachindex(sha)])
-           @test size(sha) == (2, length(mode_ml))
+            sha = SHArray{Union{Vector, Missing},2}(missing, 2, mode_ml)
+            @test all(i -> isassigned(sha, i), eachindex(sha))
+            @test size(sha) == (2, length(mode_ml))
         end
     end
 end
@@ -676,6 +693,10 @@ end
     testsimilar(v)
     M = SHMatrix{ComplexF64}(mode_lm, mode_lm)
     testsimilar(M)
+
+    SA = SHArray(Diagonal([1,2]), (LM(0:1, 0:0),1:2))
+    @test parent(similar(SA)) isa Diagonal
+    @test parent(similar(SA, Float64)) isa Diagonal{Float64}
 end
 
 @testset "nested" begin
