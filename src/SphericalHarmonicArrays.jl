@@ -191,8 +191,8 @@ end
 SHArray{T,N}(init::ArrayInitializer, modes::Vararg{RangeOrInteger,N}) where {T,N} = SHArray{T,N}(init, modes)
 SHArray{T}(init::ArrayInitializer, modes::Vararg{RangeOrInteger,N}) where {T,N} = SHArray{T}(init, modes)
 
-@deprecate SHArray{T}(modes::NTuple{N,RangeOrInteger}) where {T,N} zeros(T, modes)
-@deprecate SHArray{T,N}(modes::NTuple{N,RangeOrInteger}) where {T,N} zeros(T, modes)
+@deprecate SHArray{T}(modes::NTuple{N,RangeOrInteger}) where {T,N} fill!(SHArray{T}(undef, modes), zero(T))
+@deprecate SHArray{T,N}(modes::NTuple{N,RangeOrInteger}) where {T,N} fill!(SHArray{T,N}(undef, modes), zero(T))
 
 for (DT, f) in ((:zeros, :zero), (:ones, :one))
     @eval function Base.$DT(::Type{T}, modes::NTuple{N,RangeOrInteger}) where {T,N}
