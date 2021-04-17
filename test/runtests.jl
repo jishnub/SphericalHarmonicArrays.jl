@@ -300,6 +300,12 @@ end
         @test Base.dataids(sm) == Base.dataids(arr)
     end
 
+    @testset "misc" begin
+        @test strides(sm) == strides(arr)
+        @test Base.elsize(typeof(sm)) == Base.elsize(typeof(arr))
+        @test Base.unsafe_convert(Ptr{eltype(sm)}, sm) == Base.unsafe_convert(Ptr{eltype(arr)}, arr)
+    end
+
     @testset "zeros and ones" begin
         for (DT, f) in ((:zeros, :zero), (:ones, :one))
             @eval begin
