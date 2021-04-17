@@ -32,6 +32,7 @@ end
 
 """
     s = SHArray(arr::AbstractArray{T,N}, modes::NTuple{N, Union{AbstractUnitRange, SphericalHarmonicModes.ModeRange}}) where {T,N}
+    s = SHArray(arr::AbstractArray{T,N}, modes::Vararg{Union{AbstractUnitRange, SphericalHarmonicModes.ModeRange}, N}) where {T,N}
 
 Create a wrapper around an array such that certain dimensions may be indexed using
 `Tuple` of spherical harmonic modes. Often the indices would be spherical harmonic
@@ -71,7 +72,7 @@ struct SHArray{T, N, AA<:AbstractArray{T,N}, TM<:NTuple{N,RangeOrInteger}} <: Ab
     modes :: TM
 
     function SHArray{T,N,AA,TM}(arr::AA, modes::TM) where {T, N, AA<:AbstractArray{T,N}, TM<:NTuple{N,RangeOrInteger}}
-        map(checkaxes, axes(arr), map(moderangeaxes, modes))
+        foreach(checkaxes, axes(arr), map(moderangeaxes, modes))
         new{T,N,AA,TM}(arr, modes)
     end
 end
@@ -89,6 +90,10 @@ function SHArray(arr::AbstractArray{T,N}, modes::NTuple{N,Union{Colon, RangeOrIn
     modes_uncolon = map(_uncolon, axes(arr), modes)
     SHArray{T, N, typeof(arr), typeof(modes_uncolon)}(arr, modes_uncolon)
 end
+SHArray(A::AbstractArray, modes::Vararg{Union{Colon, RangeOrInteger}}) = SHArray(A, modes)
+
+# SHArrays may pop their parent to avoid multiple wrappers
+SHArray(S::SHArray{<:Any,N}, modes::NTuple{N,Union{Colon, RangeOrInteger}}) where {N} = SHArray(parent(S), modes)
 
 """
     s = SHArray(arr::AbstractArray{T,N}, dimsmodes::Pairs{Int, <:SphericalHarmonicModes.ModeRange}) where {T,N}
@@ -469,8 +474,8 @@ const ModeRangeIndexType = Union{Tuple{Integer,Integer},ModeRange,
                             AbstractUnitRange{<:Integer}}}
 
 # use modes instead of axes for indexing in general, so that we may convert tuples of modes to indices
-@inline Base.to_indices(s::SHArray, I::Tuple) = to_indices(s, modes(s), I)
-@inline Base.to_indices(s::SHVector, I::Tuple{ModeRangeIndexType}) = to_indices(s, modes(s), I)
+@propagate_inbounds Base.to_indices(s::SHArray, I::Tuple) = to_indices(s, modes(s), I)
+@propagate_inbounds Base.to_indices(s::SHVector, I::Tuple{ModeRangeIndexType}) = to_indices(s, modes(s), I)
 
 # methods to avoid ambiguity
 @inline Base.to_indices(A::SHArray, I::Tuple{Vararg{Int}}) = I
@@ -481,13 +486,9 @@ const ModeRangeIndexType = Union{Tuple{Integer,Integer},ModeRange,
 @inline Base.to_indices(s::SHArray, I::Tuple{Vararg{Union{Integer, CartesianIndex}}}) =
     to_indices(parent(s), I)
 
-@inline function Base.to_indices(s::SHArray, m::Tuple{ModeRange,Vararg{Any}},
+@propagate_inbounds function Base.to_indices(s::SHArray, m::Tuple{ModeRange,Vararg{Any}},
     I::Tuple{ModeRangeIndexType,Vararg{Any}})
     (modeindex(first(m), first(I)), to_indices(s, tail(m), tail(I))...)
-end
-
-@inline function Base.uncolon(inds::Tuple{ModeRange,Vararg{Any}}, I::Tuple{Colon, Vararg{Any}})
-    Base.uncolon(axes(first(inds)), I)
 end
 
 # getindex
