@@ -44,6 +44,16 @@ end
 
             sa = SHArray(arr,(mode_lm,))
             @test sa.modes == (mode_lm,)
+            sa = SHArray(arr, mode_lm)
+            @test sa.modes == (mode_lm,)
+
+            sa2 = SHArray(sa, (mode_lm,))
+            @test parent(sa2) === parent(sa)
+            @test sa2.modes == (mode_lm,)
+
+            sa2 = SHArray(sa, mode_lm)
+            @test parent(sa2) === parent(sa)
+            @test sa2.modes == (mode_lm,)
         end
         @testset "SHVector" begin
             @test SHVector{ComplexF64}(mode_lm) == arr

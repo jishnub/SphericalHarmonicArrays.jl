@@ -9,7 +9,7 @@ TupleTools = "9d95972d-f1c8-5527-a6e0-b4b365fa01f6"
 
 [compat]
 OffsetArrays = "0.11, 1.0"
-SphericalHarmonicModes = "0.4"
+SphericalHarmonicModes = "0.4.7"
 TupleTools = "1.2"
 julia = "1"
 
