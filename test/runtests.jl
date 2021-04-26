@@ -914,12 +914,14 @@ end
     modes = LM(0:lmax);
     v = SHArray(1:length(modes), modes)
     v2 = SphericalHarmonicArrays.permuteflipmodes(v)
-    @test parent(v2) == [4,2,5,7,1,3,6,8,9]
+    p = modeindex.((modes,), SphericalHarmonicModes.flip(modes))
+    @test parent(v2) == v[p]
 
     modes = ML(0:lmax);
     v = SHArray(1:length(modes), modes)
     v2 = SphericalHarmonicArrays.permuteflipmodes(v)
-    @test parent(v2) == [5,2,6,1,3,7,4,8,9]
+    p = modeindex.((modes,), SphericalHarmonicModes.flip(modes))
+    @test parent(v2) == v[p]
 end
 
 @testset "show" begin

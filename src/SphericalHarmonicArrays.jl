@@ -586,6 +586,6 @@ function permuteflipmodes(v::AbstractVector, modes::Union{LM,ML})
     end
     return v_new
 end
-permuteflipmodes(v::SHVector) = permuteflipmodes(v, only(modes(v)))
+permuteflipmodes(v::SHVector) = permuteflipmodes(v, first(modes(v)))
 
 end # module
