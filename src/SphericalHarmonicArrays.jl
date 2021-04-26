@@ -581,9 +581,8 @@ Permute `v` with the map obtained by flipping the order of modes in `p`.
 function permuteflipmodes(v::AbstractVector, modes::Union{LM,ML})
     modes_new = SphericalHarmonicModes.flip(modes)
     v_new = SHArray(similar(v), modes_new)
-    v_sh = SHArray(v, modes)
-    @inbounds for m in modes
-        v_new[m] = v[m]
+    @inbounds for (ind, m) in enumerate(modes)
+        v_new[m] = v[ind]
     end
     return v_new
 end
