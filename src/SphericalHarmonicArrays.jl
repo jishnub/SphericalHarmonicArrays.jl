@@ -573,4 +573,19 @@ function Base.replace_in_print_matrix(A::SHArray, i::Integer, j::Integer, s::Abs
     Base.replace_in_print_matrix(parent(A), i, j, s)
 end
 
+"""
+    permuteflipmodes(v::AbstractVector, p::Union{LM, ML})
+
+Permute `v` with the map obtained by flipping the order of modes in `p`.
+"""
+function permuteflipmodes(v::AbstractVector, modes::Union{LM,ML})
+    modes_new = SphericalHarmonicModes.flip(modes)
+    v_new = SHArray(similar(v), modes_new)
+    @inbounds for (ind, m) in enumerate(modes)
+        v_new[m] = v[ind]
+    end
+    return v_new
+end
+permuteflipmodes(v::SHVector) = permuteflipmodes(v, first(modes(v)))
+
 end # module

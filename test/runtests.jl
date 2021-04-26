@@ -909,6 +909,21 @@ end
     end
 end
 
+@testset "permuteflipmodes" begin
+    lmax = 2;
+    modes = LM(0:lmax);
+    v = SHArray(1:length(modes), modes)
+    v2 = SphericalHarmonicArrays.permuteflipmodes(v)
+    p = modeindex.((modes,), SphericalHarmonicModes.flip(modes))
+    @test parent(v2) == v[p]
+
+    modes = ML(0:lmax);
+    v = SHArray(1:length(modes), modes)
+    v2 = SphericalHarmonicArrays.permuteflipmodes(v)
+    p = modeindex.((modes,), SphericalHarmonicModes.flip(modes))
+    @test parent(v2) == v[p]
+end
+
 @testset "show" begin
     io = IOBuffer()
     showerror(io, SphericalHarmonicArrays.ModeMismatchError(LM(1:2), LM(1:4)))
