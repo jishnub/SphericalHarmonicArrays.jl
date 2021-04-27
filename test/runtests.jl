@@ -667,6 +667,20 @@ end
     end
 end
 
+@testset "views" begin
+    S = zeros(LM(0:2))
+    Sv = @view S[:]
+    for i in eachindex(S, Sv)
+        @test S[i] == Sv[i]
+    end
+
+    S = zeros(2, LM(0:2))
+    Sv = @view S[1:2, 1:2]
+    for I in CartesianIndices(Sv)
+        @test S[I] == Sv[I]
+    end
+end
+
 @testset "similar" begin
     mode_lm = LM(0:1, 0:0)
     mode_ml = ML(0:1, 0:0)
