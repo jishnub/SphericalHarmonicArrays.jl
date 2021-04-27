@@ -502,6 +502,9 @@ end
     s
 end
 
+# views may pop the parent
+Base.view(S::SHArray, I...) = view(parent(S), I...)
+
 Base.strides(A::SHArray) = strides(parent(A))
 Base.elsize(::Type{<:SHArray{T,N,A}}) where {T,N,A} = Base.elsize(A)
 @inline Base.unsafe_convert(::Type{Ptr{T}}, A::SHArray{T}) where {T} = Base.unsafe_convert(Ptr{T}, parent(A))
