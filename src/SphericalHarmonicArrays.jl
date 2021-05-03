@@ -503,7 +503,7 @@ end
 end
 
 # views may pop the parent
-Base.view(S::SHArray, I...) = view(parent(S), I...)
+Base.view(S::SHArray, I...) = view(parent(S), to_indices(S, I)...)
 
 Base.strides(A::SHArray) = strides(parent(A))
 Base.elsize(::Type{<:SHArray{T,N,A}}) where {T,N,A} = Base.elsize(A)
