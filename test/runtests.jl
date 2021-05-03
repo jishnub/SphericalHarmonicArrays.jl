@@ -668,17 +668,23 @@ end
 end
 
 @testset "views" begin
-    S = zeros(LM(0:2))
+    modes = LM(0:2)
+    S = SHArray(1:length(modes), modes)
     Sv = @view S[:]
     for i in eachindex(S, Sv)
         @test S[i] == Sv[i]
     end
 
-    S = zeros(2, LM(0:2))
+    S = SHArray(rand(2, length(modes)), :, modes)
     Sv = @view S[1:2, 1:2]
     for I in CartesianIndices(Sv)
         @test S[I] == Sv[I]
     end
+
+    Sv = @view S[1, LM(1,-1)]
+    @test Sv[] == S[1,2]
+    Sv = @view S[1, LM(1:2,-1)]
+    @test Sv == S[1,2:3]
 end
 
 @testset "similar" begin
