@@ -97,6 +97,7 @@ SHArray(S::SHArray{<:Any,N}, modes::NTuple{N,Union{Colon, RangeOrInteger}}) wher
 
 SHArray{T,N,A,M}(S::SHArray{T,N,A,M}) where {T,N,A<:AbstractArray{T,N}, M<:NTuple{N,RangeOrInteger}} = S
 SHArray{T,N,A,M}(S::SHArray) where {T,N,A<:AbstractArray{T,N}, M<:NTuple{N,RangeOrInteger}} = SHArray(convert(A, parent(S)), convert(M, modes(S)))
+SHArray{T,N,A,M}(S::SHArray) where {T,N,A<:AbstractArray{T,N}, M<:NTuple{N,Union{AbstractUnitRange{<:Integer},Integer}}} = SHArray(convert(A, parent(S)), convert(M, map(moderangeaxes, modes(S))))
 SHArray{T,N,A,M}(S::AbstractArray) where {T,N,A<:AbstractArray{T,N}, M<:NTuple{N,Union{AbstractUnitRange{<:Integer},Integer}}} = SHArray(convert(A, S), convert(M, axes(S)))
 Base.convert(::Type{T}, A::AbstractArray) where {T<:SHArray} = A isa T ? A : T(A)
 

@@ -281,8 +281,11 @@ end
         @test convert(T, A) isa T
         @test typeof(A)(A) === A
 
+        T = SHArray{Float64, 1, Vector{Float64}, typeof(axes(A))}
+        @test convert(T, A) isa T
+
         A = ones(2)
-        T = SHArray{Float64, 1, Vector{Float64}, Tuple{Base.OneTo{Int}}}
+        T = SHArray{Float64, 1, Vector{Float64}, typeof(axes(A))}
         @test convert(T, A) isa T
     end
 end
