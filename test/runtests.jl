@@ -275,6 +275,15 @@ end
             @test size(sha) == (2, length(mode_ml))
         end
     end
+    @testset "convert" begin
+        A = SHArray(zeros(2), LM(1, ZeroTo(1)))
+        T = SHArray{Float64, 1, Vector{Float64}, Tuple{LM{SingleValuedRange, ZeroTo{true}}}}
+        @test convert(T, A) isa T
+
+        A = ones(2)
+        T = SHArray{Float64, 1, Vector{Float64}, Tuple{Base.OneTo{Int}}}
+        @test convert(T, A) isa T
+    end
 end
 
 @testset "Base functions" begin
