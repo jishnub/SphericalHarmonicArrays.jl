@@ -279,6 +279,7 @@ end
         A = SHArray(zeros(2), LM(1, ZeroTo(1)))
         T = SHArray{Float64, 1, Vector{Float64}, Tuple{LM{SingleValuedRange, ZeroTo{true}}}}
         @test convert(T, A) isa T
+        @test typeof(A)(A) === A
 
         A = ones(2)
         T = SHArray{Float64, 1, Vector{Float64}, Tuple{Base.OneTo{Int}}}
