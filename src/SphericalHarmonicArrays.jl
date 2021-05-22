@@ -1,5 +1,4 @@
 module SphericalHarmonicArrays
-using OffsetArrays
 import Base: tail, @propagate_inbounds
 using TupleTools
 using SphericalHarmonicModes
