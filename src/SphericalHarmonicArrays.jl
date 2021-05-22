@@ -1,9 +1,8 @@
 module SphericalHarmonicArrays
-using OffsetArrays
-import Base: tail, @propagate_inbounds
+using Base: tail, @propagate_inbounds
 using TupleTools
 using SphericalHarmonicModes
-import SphericalHarmonicModes: ModeRange
+using SphericalHarmonicModes: ModeRange
 
 export SHArray
 export SHVector
@@ -49,7 +48,7 @@ The resulting map would be of the form
 # Examples
 
 ```jldoctest; setup=:(using SphericalHarmonicModes)
-julia> import SphericalHarmonicModes: LM
+julia> using SphericalHarmonicModes: LM
 
 julia> s = SHArray(reshape(1:4, 2, 2), (LM(0:1, 0:0), 1:2))
 2×2 SHArray(reshape(::UnitRange{Int64}, 2, 2), (LM(0:1, 0:0), 1:2)):
@@ -110,7 +109,7 @@ if performance is a concern.
 
 # Examples
 ```jldoctest; setup=:(using SphericalHarmonicModes)
-julia> import SphericalHarmonicModes: LM
+julia> using SphericalHarmonicModes: LM
 
 julia> s2 = SHArray(reshape(1:4, 2, 2), 1 => LM(0:1, 0:0))
 2×2 SHArray(reshape(::UnitRange{Int64}, 2, 2), (LM(0:1, 0:0), Base.OneTo(2))):
@@ -158,7 +157,7 @@ The elements of the parent array are set according to the initializer `init`.
 # Examples
 
 ```jldoctest; setup=:(using SphericalHarmonicModes)
-julia> import SphericalHarmonicModes: LM
+julia> using SphericalHarmonicModes: LM
 
 julia> SHArray{Missing}(undef, (LM(0:1, 0:0), 2))
 2×2 SHArray(::$(Array{Missing,2}), (LM(0:1, 0:0), Base.OneTo(2))):
@@ -173,7 +172,7 @@ The elements are set to zero.
 
 # Examples
 ```jldoctest; setup=:(using SphericalHarmonicModes)
-julia> import SphericalHarmonicModes: LM
+julia> using SphericalHarmonicModes: LM
 
 julia> SHArray{Float64}((LM(1:1, 0:1), LM(0:0, 0:0)))
 2×1 SHArray(::$(Array{Float64,2}), (LM(1:1, 0:1), LM(0:0, 0:0))):
@@ -229,7 +228,7 @@ Often the `Tuple` would be a pair of spherical harmonic degrees `(l,m)`.
 # Examples
 
 ```jldoctest; setup=:(using SphericalHarmonicModes)
-julia> import SphericalHarmonicModes: LM
+julia> using SphericalHarmonicModes: LM
 
 julia> s = SHVector(1:3, LM(1:1))
 3-element SHArray(::UnitRange{Int64}, (LM(1:1, -1:1),)):
@@ -262,7 +261,7 @@ The default value is set by the initializer `init`.
 
 # Examples
 ```jldoctest; setup=:(using SphericalHarmonicModes)
-julia> import SphericalHarmonicModes: LM
+julia> using SphericalHarmonicModes: LM
 
 julia> SHVector{Missing}(undef, LM(1:1, -1:1))
 3-element SHArray(::$(Array{Missing,1}), (LM(1:1, -1:1),)):
@@ -279,7 +278,7 @@ The elements are set to zero.
 
 # Examples
 ```jldoctest; setup=:(using SphericalHarmonicModes)
-julia> import SphericalHarmonicModes: LM
+julia> using SphericalHarmonicModes: LM
 
 julia> SHVector{ComplexF64}(LM(0:0, 0:0))
 1-element SHArray(::$(Array{Complex{Float64},1}), (LM(0:0, 0:0),)):
@@ -320,7 +319,7 @@ Often these `Tuple`s would be pairs of spherical harmonic degrees `(l,m)`.
 # Examples
 
 ```jldoctest; setup=:(using SphericalHarmonicModes)
-julia> import SphericalHarmonicModes: LM
+julia> using SphericalHarmonicModes: LM
 
 julia> s = SHMatrix(reshape(1:4, 2,2), (LM(0:1, 0:0), LM(1:2,0:0)))
 2×2 SHArray(reshape(::UnitRange{Int64}, 2, 2), (LM(0:1, 0:0), LM(1:2, 0:0))):
@@ -346,7 +345,7 @@ The default value is set by the initializer `init`.
 
 # Examples
 ```jldoctest; setup=:(using SphericalHarmonicModes)
-julia> import SphericalHarmonicModes: LM
+julia> using SphericalHarmonicModes: LM
 
 julia> SHMatrix{Missing}(undef, LM(1:1), LM(0:1, 0:0))
 3×2 SHArray(::$(Array{Missing,2}), (LM(1:1, -1:1), LM(0:1, 0:0))):
@@ -363,7 +362,7 @@ The elements are set to zero.
 
 # Examples
 ```jldoctest; setup=:(using SphericalHarmonicModes)
-julia> import SphericalHarmonicModes: LM
+julia> using SphericalHarmonicModes: LM
 
 julia> SHMatrix{ComplexF64}(LM(0:0, 0:0), LM(0:0, 0:0))
 1×1 SHArray(::$(Array{Complex{Float64},2}), (LM(0:0, 0:0), LM(0:0, 0:0))):
@@ -417,7 +416,7 @@ This is type-stable even if `arr.modes` contains inhomogeneous types.
 
 # Examples
 ```jldoctest; setup=:(using SphericalHarmonicModes)
-julia> import SphericalHarmonicModes: LM
+julia> using SphericalHarmonicModes: LM
 
 julia> sa = SHArray{ComplexF64}((2,2));
 
@@ -448,7 +447,7 @@ This is type-stable even if `arr.modes` contains inhomogeneous types.
 
 # Examples
 ```jldoctest; setup=:(using SphericalHarmonicModes)
-julia> import SphericalHarmonicModes: LM
+julia> using SphericalHarmonicModes: LM
 
 julia> s = SHArray{Float64}((LM(1:1,0:1), LM(0:0)));
 
