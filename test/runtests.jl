@@ -22,7 +22,10 @@ end
     mode_l₂l₁ = L2L1Triangle(0:2, 2,0:2)
     @testset "0dim" begin
         @test SHArray(zeros(), ()) == zeros()
-        @test SHArray(zeros()) == zeros()
+        S = SHArray(zeros())
+        @test S == zeros()
+        @test deepcopy(S) == S
+        @test deepcopy(S) !== S
     end
     function checkarrs(sa, arr::AbstractArray)
         @test sa == arr
@@ -36,6 +39,10 @@ end
         checkarrs(sa, arr)
         sa = SHArray(arr, (:,))
         checkarrs(sa, arr)
+        sad = deepcopy(sa)
+        @test sad == sa
+        @test modes(sad) == modes(sa)
+        @test sad !== sa
 
         sa = SHArray(arr)
         checkarrs(sa, arr)
@@ -58,6 +65,11 @@ end
             sa2 = SHArray(sa, mode_lm)
             @test parent(sa2) === parent(sa)
             @test sa2.modes == (mode_lm,)
+
+            sa2d = deepcopy(sa2)
+            @test sa2d == sa2
+            @test modes(sa2d) == modes(sa2)
+            @test sa2d !== sa2
         end
         @testset "SHVector" begin
             @test SHVector{ComplexF64}(mode_lm) == arr
@@ -68,6 +80,11 @@ end
             svundef = SHVector{eltype(arr)}(undef, mode_lm)
             @test svundef.modes == sv.modes
             @test axes(parent(svundef)) == axes(parent(sv))
+
+            svd = deepcopy(sv)
+            @test svd == sv
+            @test modes(svd) == modes(sv)
+            @test svd !== sv
         end
     end
     @testset "2D mixed axes" begin
@@ -90,6 +107,10 @@ end
             sa = SHArray(arr, (mode_lm, :))
             testSA(sa, arr, ax)
             @test parent(sa) === arr
+            sad = deepcopy(sa)
+            @test sad == sa
+            @test modes(sad) == modes(sa)
+            @test sad !== sa
 
             sa = SHArray(arr, 1=>mode_lm)
             testSA(sa, arr, ax)
