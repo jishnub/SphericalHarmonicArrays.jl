@@ -516,7 +516,7 @@ Base.elsize(::Type{<:SHArray{T,N,A}}) where {T,N,A} = Base.elsize(A)
 
 # optimize deepcopy
 function Base.deepcopy_internal(S::SHArray, stackdict::IdDict)
-    _P = Base.deepcopy_internal(parent(S), stackdict)::typeof(parent(S))
+    _P = Base.deepcopy_internal(parent(S), stackdict)::parenttype(S)
     _modes = Base.deepcopy_internal(modes(S), stackdict)
     typeof(S)(_P, _modes)
 end
