@@ -9,7 +9,11 @@ using LinearAlgebra
 using Aqua
 
 @testset "project quality" begin
-    Aqua.test_all(SphericalHarmonicArrays, unbound_args = false)
+    if VERSION >= v"1.6.0"
+        Aqua.test_all(SphericalHarmonicArrays, unbound_args = false)
+    else
+        Aqua.test_all(SphericalHarmonicArrays, unbound_args = false, ambiguities = false)
+    end
 end
 
 @testset "Constructors" begin
