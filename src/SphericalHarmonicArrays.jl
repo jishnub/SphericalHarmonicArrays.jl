@@ -514,6 +514,13 @@ Base.strides(A::SHArray) = strides(parent(A))
 Base.elsize(::Type{<:SHArray{T,N,A}}) where {T,N,A} = Base.elsize(A)
 @inline Base.unsafe_convert(::Type{Ptr{T}}, A::SHArray{T}) where {T} = Base.unsafe_convert(Ptr{T}, parent(A))
 
+# optimize deepcopy
+function Base.deepcopy_internal(S::SHArray, stackdict::IdDict)
+    _P = Base.deepcopy_internal(parent(S), stackdict)::parenttype(S)
+    _modes = Base.deepcopy_internal(modes(S), stackdict)
+    typeof(S)(_P, _modes)
+end
+
 # Broadcasting
 Base.BroadcastStyle(::Type{<:SHArray}) = Broadcast.ArrayStyle{SHArray}()
 
